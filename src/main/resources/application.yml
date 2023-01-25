@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    username: user
+    url: jdbc:mysql://52.78.11.161:58448/sinabro?createDatabaseIfNotExist=true
+    password: user012
+  jpa:
+    generate-ddl: 'true'
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernates:
+      ddl-auto: update
+    show-sql: 'true'
+server:
+  port: '9000'
