@@ -1,5 +1,5 @@
 # sinabroServer
-sinabro Client Repository <br>
+sinabro Server Repository <br>
 [Client Repository](https://github.com/Sinabro-littlebylittle/sinabroClient)
 
 ---
