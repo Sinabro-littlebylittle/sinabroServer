@@ -1,5 +1,7 @@
-package com.sinabro.server.model.places;
+package com.sinabro.server.dto;
 
+import com.sinabro.server.domain.entity.Places;
+import com.sinabro.server.domain.repository.PlacesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Streamable;
 import org.springframework.stereotype.Service;

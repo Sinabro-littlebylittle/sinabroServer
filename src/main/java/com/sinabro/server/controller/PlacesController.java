@@ -1,7 +1,7 @@
 package com.sinabro.server.controller;
 
-import com.sinabro.server.model.places.Places;
-import com.sinabro.server.model.places.PlacesDAO;
+import com.sinabro.server.domain.entity.Places;
+import com.sinabro.server.dto.PlacesDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
