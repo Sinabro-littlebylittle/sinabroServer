@@ -1,7 +1,7 @@
 package com.sinabro.server.controller;
 
-import com.sinabro.server.model.places.Places;
-import com.sinabro.server.model.places.PlacesDAO;
+import com.sinabro.server.domain.entity.Places;
+import com.sinabro.server.dto.PlacesDAO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
