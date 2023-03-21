@@ -1,6 +1,6 @@
 package com.sinabro.server.domain.entity;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.*;
 
 @NoArgsConstructor
