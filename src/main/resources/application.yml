@@ -11,5 +11,8 @@ spring:
     hibernates:
       ddl-auto: update
     show-sql: 'true'
+  mvc:
+    pathmatch:
+      matching-strategy: ant-path-matcher
 server:
   port: '9000'
