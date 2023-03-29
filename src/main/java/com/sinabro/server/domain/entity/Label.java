@@ -19,4 +19,6 @@ public class Label {
     private User user;
 
     private String label_name;
+
+    private String label_color;
 }
