@@ -29,5 +29,9 @@ public class User {
     @ColumnDefault("0")
     private Double point_score;
 
+    private String file_name;
+
+    private String file_path;
+
 
 }
