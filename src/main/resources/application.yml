@@ -1,7 +1,8 @@
 spring:
   datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://3.35.20.238:50514/sinabro?createDatabaseIfNotExist=true&serverTimezone=UTC&characterEncoding=UTF-8
     username: user
-    url: jdbc:mysql://3.35.20.238:50514/sinabro?createDatabaseIfNotExist=true
     password: user012
   jpa:
     generate-ddl: "true"
