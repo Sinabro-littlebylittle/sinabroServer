@@ -19,8 +19,13 @@ app.get('/', (req, res) => {
 
 app.use(express.json());
 
+// [places] collection에 대한 router 등록
 const placeRouter = require('./routes/places');
 app.use('/places', placeRouter);
+
+// [people_numbers] collection에 대한 router 등록
+const peopleNumberRouter = require('./routes/people_numbers');
+app.use('/peopleNumbers', peopleNumberRouter);
 
 app.listen(port, () => {
   console.log('Server Started');
