@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 
-const PlaceSchema = new mongoose.Schema(
+const placeSchema = new mongoose.Schema(
   {
     placeName: String,
     address: String,
+    detailAddress: String,
     latitude: String,
     longitude: String,
   },
@@ -12,6 +13,6 @@ const PlaceSchema = new mongoose.Schema(
   }
 );
 
-const Place = mongoose.model('Place', PlaceSchema);
+const Place = mongoose.model('places', placeSchema);
 
 module.exports = Place;
