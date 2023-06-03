@@ -29,7 +29,7 @@ app.use('/peopleNumbers', peopleNumberRouter);
 
 // [markers] collection에 대한 router 등록
 const markerRouter = require('./routes/markers');
-app.use('/markers', peopleNumberRouter);
+app.use('/markers', markerRouter);
 
 app.listen(port, () => {
   console.log('Server Started');
