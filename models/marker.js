@@ -10,6 +10,6 @@ const markerSchema = new mongoose.Schema(
   }
 );
 
-const Place = mongoose.model('markers', markerSchema);
+const Marker = mongoose.model('markers', markerSchema);
 
-module.exports = Place;
+module.exports = Marker;
