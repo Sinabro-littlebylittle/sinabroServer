@@ -1,6 +1,7 @@
 const express = require('express');
 const Place = require('../models/place');
 const PeopleNumber = require('../models/people_number');
+const Marker = require('../models/marker');
 const { getFormattedDate } = require('../utils/dateUtils');
 const router = express.Router();
 
@@ -20,7 +21,10 @@ const getPlace = async (req, res, next) => {
   next();
 };
 
-// places collection 내 모든 document 데이터(들) 반환(Array)
+/**
+ * [앱 내 사용 여부 ❌]
+ * places collection 내 모든 document 데이터(들) 반환(Array)
+ */
 router.get('/', async (req, res) => {
   try {
     const places = await Place.find();
@@ -34,12 +38,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// :id값과 _id 필드의 값이 동일한 document의 데이터를 res.place로 설정 및 조회
-router.get('/:id', getPlace, async (req, res) => {
-  res.send(res.place);
-});
-
-// (장소 정보, places[collection])와 해당 장소의 (인원수 정보, people-numbers[collection])를 DB에 추가
+/**
+ * [앱 내 사용 여부 ✅]
+ * (장소 정보, places[collection])와 해당 장소의
+ * (인원수 정보, people-numbers[collection]), 그리고
+ * 요청된 (위도, 경도)에 대한 마커 등록 여부에 따라
+ * (마커 정보, markers[collection]) DB에 데이터 추가
+ */
 router.post('/', async (req, res) => {
   if (
     !req.body.placeName ||
@@ -51,30 +56,58 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ message: 'Missing required field.' });
   }
 
-  const place = new Place({
-    placeName: req.body.placeName,
-    address: req.body.address,
-    detailAddress: req.body.detailAddress,
-    latitude: req.body.latitude,
-    longitude: req.body.longitude,
-  });
+  let markerId;
 
   try {
+    marker = await Marker.findOne({
+      latitude: req.body.latitude,
+      longitude: req.body.longitude,
+    });
+    if (!marker) {
+      const newMarker = new Marker({
+        latitude: req.body.latitude,
+        longitude: req.body.longitude,
+      });
+      markerId = newMarker.id;
+      try {
+        await newMarker.save();
+      } catch (err) {
+        res.status(400).json({ message: err.message });
+      }
+    } else {
+      markerId = marker.id;
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+
+  try {
+    const place = new Place({
+      markerId,
+      placeName: req.body.placeName,
+      address: req.body.address,
+      detailAddress: req.body.detailAddress,
+    });
+
     const newPlace = await place.save();
+
     const peopleNumber = new PeopleNumber({
       placeId: newPlace._id,
       peopleCount: -1,
-      createdTime: getFormattedDate,
+      createdTime: getFormattedDate(),
     });
-    const newPeopleNumber = await peopleNumber.save();
 
-    res.status(201).json({ newPlace, newPeopleNumber });
+    const newPeopleNumber = await peopleNumber.save();
+    res.status(201).json(newPlace);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
 
-// :id값과 _id 필드의 값이 동일한 document의 placeName, detailAddress 데이터 수정
+/**
+ * [앱 내 사용 여부 ✅]
+ * :id값과 _id 필드의 값이 동일한 document의 placeName, detailAddress 데이터 수정
+ */
 router.patch('/:id', getPlace, async (req, res) => {
   if (req.body.placeName != null) res.place.placeName = req.body.placeName;
   if (req.body.detailAddress != null)
@@ -87,15 +120,34 @@ router.patch('/:id', getPlace, async (req, res) => {
   }
 });
 
-// :id값과 _id 필드의 값이 동일한 (people_number) 및 (places) collection 내 document(들) 삭제
+/**
+ * [앱 내 사용 여부 ❌]
+ * :id값과 _id 필드의 값이 동일한 (people_number) 및 (places) collection 내 document(들) 삭제
+ */
 router.delete('/:id', getPlace, async (req, res) => {
+  let places;
+  try {
+    places = await Place.find({
+      markerId: res.place.markerId,
+    });
+    // 삭제하려는 장소 위치(위도, 경도)에 등록된 장소가 한 곳 일 때 마커 데이터도 함께 제거
+    if (places.length === 1) {
+      try {
+        // markers collection 내 삭제하려는 장소의 _id값을 지닌 연관 document 제거
+        await Marker.deleteOne({ _id: res.place.markerId });
+      } catch (err) {
+        res.status(500).json({ message: err.message });
+      }
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+
   try {
     // people_numbers collection 내 삭제하려는 장소의 _id값을 지닌 연관 document(들) 일괄 제거
     await PeopleNumber.deleteMany({ placeId: res.place._id });
     await res.place.deleteOne();
-    res.status(204).json({
-      message: 'Deleted (Place information) and (People number info)',
-    });
+    res.status(200).json(places.length - 1);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
