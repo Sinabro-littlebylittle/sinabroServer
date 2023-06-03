@@ -27,6 +27,10 @@ app.use('/places', placeRouter);
 const peopleNumberRouter = require('./routes/people_numbers');
 app.use('/peopleNumbers', peopleNumberRouter);
 
+// [markers] collection에 대한 router 등록
+const markerRouter = require('./routes/markers');
+app.use('/markers', peopleNumberRouter);
+
 app.listen(port, () => {
   console.log('Server Started');
 });
