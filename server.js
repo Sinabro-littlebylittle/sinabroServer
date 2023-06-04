@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 const port = 5050;
 
 mongoose
@@ -19,17 +21,33 @@ app.get('/', (req, res) => {
 
 app.use(express.json());
 
+// Swagger options
+const swaggerOptions = {
+  swaggerDefinition: {
+    info: {
+      title: 'Sinabro_API',
+      version: '1.0.0',
+      description: 'Sinabro_API_DESCRIPTION',
+    },
+  },
+  apis: ['./routes/*.js'], // files containing annotations as above
+};
+
+// Initialize swagger-jsdoc -> returns validated swagger spec in json format
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 // [places] collection에 대한 router 등록
 const placeRouter = require('./routes/places');
-app.use('/places', placeRouter);
+app.use('/api/places', placeRouter);
 
 // [people_numbers] collection에 대한 router 등록
 const peopleNumberRouter = require('./routes/people_numbers');
-app.use('/peopleNumbers', peopleNumberRouter);
+app.use('/api/peopleNumbers', peopleNumberRouter);
 
 // [markers] collection에 대한 router 등록
 const markerRouter = require('./routes/markers');
-app.use('/markers', markerRouter);
+app.use('/api/markers', markerRouter);
 
 app.listen(port, () => {
   console.log('Server Started');
