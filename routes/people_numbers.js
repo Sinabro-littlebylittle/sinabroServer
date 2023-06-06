@@ -92,8 +92,6 @@ router.get('/placeInformations', async (req, res) => {
       return res.status(404).json({ message: 'Item not found.' });
     }
 
-    console.log(placeInformations);
-
     const updatedPlaceInformations =
       addUpdateElapsedTimeProp(placeInformations);
 
