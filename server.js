@@ -6,6 +6,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const morgan = require('morgan');
 const port = 5050;
 
 // Swagger options
@@ -29,6 +30,8 @@ mongoose
   .catch((err) => console.log(err));
 
 app.use(express.json());
+
+app.use(morgan('combined'));
 
 // 정적 파일 서비스를 위한 middleware 설정
 app.use(express.static(path.join(__dirname, 'public')));
