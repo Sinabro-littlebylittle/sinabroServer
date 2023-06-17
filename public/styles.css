@@ -1,0 +1,104 @@
+:root {
+  /* Color */
+  --black-color: #14171e;
+  --white-color: #fff;
+}
+
+* {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif,
+    Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+}
+
+body {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--white-color);
+}
+
+nav {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  position: fixed;
+  top: 0;
+  letter-spacing: -0.05em;
+  font-weight: 300;
+  padding: 0.75rem;
+}
+
+nav a {
+  color: var(--white-color);
+  text-decoration: none;
+  padding: 0.6rem 0.5rem;
+}
+
+nav a:last-child {
+  margin: 0 3rem 0 auto;
+}
+
+.mainDiv {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url(images/main_page_background_image.jpg);
+  background-size: cover;
+  background-position: center;
+  width: 100%;
+  height: 100vh;
+}
+
+.mainDiv h1 {
+  color: var(--white-color);
+  font-weight: 100;
+  letter-spacing: 1rem;
+  font-size: 2rem;
+  animation: fadein 2s;
+  -moz-animation: fadein 2s; /* Firefox */
+  -webkit-animation: fadein 2s; /* Safari and Chrome */
+  -o-animation: fadein 2s; /* Opera */
+}
+
+#swagger-link:hover,
+#repos-link:hover,
+#about-link:hover,
+#contact-link:hover {
+  opacity: 60%;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@-moz-keyframes fadein {
+  /* Firefox */
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@-webkit-keyframes fadein {
+  /* Safari and Chrome */
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@-o-keyframes fadein {
+  /* Opera */
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
