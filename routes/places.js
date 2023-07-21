@@ -214,7 +214,7 @@ router.post('/', async (req, res) => {
     });
 
     const newPeopleNumber = await peopleNumber.save();
-    res.status(201).json({ newMarker, newPlace, newPeopleNumber });
+    res.status(201).json(newPlace);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -287,7 +287,7 @@ router.patch('/:id', getPlace, async (req, res) => {
  *         required: true
  *         description: placeId
  *     responses:
- *       '204':
+ *       '200':
  *         description: Created
  *         schema:
  *           type: integer
@@ -317,7 +317,7 @@ router.delete('/:id', getPlace, async (req, res) => {
     // people_numbers collection 내 삭제하려는 장소의 _id값을 지닌 연관 document(들) 일괄 제거
     await PeopleNumber.deleteMany({ placeId: res.place._id });
     await res.place.deleteOne();
-    res.status(204).json(places.length - 1);
+    res.status(200).json(places.length - 1);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
