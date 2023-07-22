@@ -40,6 +40,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// [user_infos] collection에 대한 router 등록
+const userInfoRouter = require('./routes/auth');
+app.use('/api/auth', userInfoRouter);
+
 // [places] collection에 대한 router 등록
 const placeRouter = require('./routes/places');
 app.use('/api/places', placeRouter);
