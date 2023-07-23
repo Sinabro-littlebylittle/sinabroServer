@@ -3,7 +3,6 @@ require('dotenv').config();
 
 const verifyToken = (req, res, next) => {
   try {
-    console.log(req.headers.cookie.replace('user=', ''));
     const clientToken = req.headers.cookie.replace('user=', '');
     const decoded = jwt.verify(clientToken, process.env.JWT_TOKEN_SECRET);
     if (!decoded) {

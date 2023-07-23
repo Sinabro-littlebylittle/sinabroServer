@@ -3,6 +3,7 @@ const Place = require('../models/place');
 const PeopleNumber = require('../models/people_number');
 const Marker = require('../models/marker');
 const { getFormattedDate } = require('../utils/dateUtils');
+const { verifyToken } = require('./middlewares/authorization');
 const router = express.Router();
 
 /** ⚙️ [places] collection에 대한 Model definition
@@ -160,7 +161,7 @@ router.get('/', async (req, res) => {
  *       500:
  *         description: Internal Server Error
  */
-router.post('/', async (req, res) => {
+router.post('/private', verifyToken, async (req, res) => {
   if (
     !req.body.placeName ||
     !req.body.address ||
@@ -180,10 +181,7 @@ router.post('/', async (req, res) => {
       longitude: req.body.longitude,
     });
     if (!marker) {
-      newMarker = new Marker({
-        latitude: req.body.latitude,
-        longitude: req.body.longitude,
-      });
+      newMarker = new Marker(req.body);
       markerId = newMarker.id;
       try {
         await newMarker.save();
@@ -198,12 +196,8 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const place = new Place({
-      markerId,
-      placeName: req.body.placeName,
-      address: req.body.address,
-      detailAddress: req.body.detailAddress,
-    });
+    const place = new Place(req.body);
+    place.markerId = markerId;
 
     const newPlace = await place.save();
 
@@ -258,7 +252,7 @@ router.post('/', async (req, res) => {
  *       400:
  *         description: Bad Request
  */
-router.patch('/:id', getPlace, async (req, res) => {
+router.patch('/private/:id', getPlace, verifyToken, async (req, res) => {
   if (req.body.placeName != null) res.place.placeName = req.body.placeName;
   if (req.body.detailAddress != null)
     res.place.detailAddress = req.body.detailAddress;
@@ -294,7 +288,7 @@ router.patch('/:id', getPlace, async (req, res) => {
  *       500:
  *         description: Internal Server Error
  */
-router.delete('/:id', getPlace, async (req, res) => {
+router.delete('/private/:id', getPlace, verifyToken, async (req, res) => {
   let places;
   try {
     places = await Place.find({

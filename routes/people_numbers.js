@@ -80,7 +80,7 @@ router.get('/', async (req, res) => {
  * [앱 내 사용 여부 ✅]
  * places와 marker collection의 참조 document 데이터(들) 반환(Array)
  */
-router.get('/placeInformations', async (req, res) => {
+router.get('/public/placeInformations', async (req, res) => {
   try {
     const placeInformations = await PeopleNumber.find()
       .populate({
@@ -117,7 +117,7 @@ router.get('/:id', getPlaceInformations, async (req, res) => {
  * :id값과 markerId 필드의 값이 동일한 document에 대해서
  * places와 marker collection의 참조 document 데이터(들) 반환(Array)
  */
-router.get('/:id/placeInformations', async (req, res) => {
+router.get('/public/:id/placeInformations', async (req, res) => {
   try {
     const placeInformations = await PeopleNumber.find()
       .populate({
@@ -128,6 +128,9 @@ router.get('/:id/placeInformations', async (req, res) => {
     if (!placeInformations) {
       return res.status(404).json({ message: 'Item not found.' });
     }
+
+    console.log(placeInformations[0].placeId.markerId._id.toString());
+    console.log(req.params.id);
 
     const filteredPlaceInformations = placeInformations.filter(
       (info) => info.placeId.markerId._id.toString() === req.params.id
@@ -147,16 +150,13 @@ router.get('/:id/placeInformations', async (req, res) => {
  * [앱 내 사용 여부 ✅]
  * 특정 장소에 대한 (인원수 정보)를 DB에 추가
  */
-router.post('/', async (req, res) => {
+router.post('/private', async (req, res) => {
   if (!req.body.placeId || !req.body.peopleCount) {
     return res.status(400).json({ message: 'Missing required field.' });
   }
 
-  const peopleNumber = new PeopleNumber({
-    placeId: req.body.placeId,
-    peopleCount: req.body.peopleCount,
-    createdTime: getFormattedDate(),
-  });
+  const peopleNumber = new PeopleNumber(req.body);
+  peopleNumber.createdTime = getFormattedDate();
 
   try {
     const newPeopleNumber = await peopleNumber.save();
