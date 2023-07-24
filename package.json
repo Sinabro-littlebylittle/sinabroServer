@@ -14,7 +14,8 @@
     "mongoose": "^7.2.1",
     "morgan": "^1.10.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^4.6.3"
+    "swagger-ui-express": "^4.6.3",
+    "winston": "^3.10.0"
   },
   "devDependencies": {
     "dotenv": "^16.0.3",
