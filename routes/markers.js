@@ -14,13 +14,16 @@ const router = express.Router();
  *     properties:
  *       _id:
  *         type: string
- *         description: Marker's ID
+ *         description: markerId
  *       latitude:
  *         type: string
- *         description: Latitude of the marker
+ *         description: 마커의 위도
  *       longitude:
  *         type: string
- *         description: Longitude of the marker
+ *         description: 마커의 경도
+ *       __v:
+ *         type: number
+ *         description: version key
  */
 
 /**
@@ -28,12 +31,9 @@ const router = express.Router();
  * /api/markers:
  *   get:
  *     tags:
- *       - Marker API
- *     summary: Returns a list of markers ➜ [In-App use ❌]
- *     description: |
- *       🇺🇸: This API fetches a list of markers from [markers] collection.
- *
- *       🇰🇷: 이 API는 [markers] collection 내의 마커 목록을 가져옵니다.
+ *       - Markers Collection 기반 API
+ *     summary: (markers) Collection 내의 모든 Document(s) 반환 ➜ [In-App use ❌]
+ *     description: (markers) collection 내의 모든 데이터 목록을 반환합니다.
  *     responses:
  *       200:
  *         description: OK
@@ -42,19 +42,31 @@ const router = express.Router();
  *             $ref: '#/definitions/Marker'
  *       404:
  *         description: Not Found
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Not Found"
  *       500:
  *         description: Internal Server Error
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Internal Server Error"
  */
 router.get('/', async (req, res) => {
   try {
     const markers = await Marker.find();
     if (!markers) {
-      return res.status(404).json({ message: err.message });
+      return res.status(404).json({ error: 'Not Found' });
     }
 
     res.status(200).json(markers);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.error });
   }
 });
 
