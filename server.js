@@ -17,6 +17,15 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'Sinabro_API_DESCRIPTION',
     },
+    securityDefinitions: {
+      JWT: {
+        type: 'apiKey',
+        name: 'Authorization',
+        in: 'headers',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
   },
   apis: ['./routes/*.js'], // files containing annotations as above
 };
@@ -48,9 +57,9 @@ app.use('/api/auth', userInfoRouter);
 const placeRouter = require('./routes/places');
 app.use('/api/places', placeRouter);
 
-// [people_numbers] collection에 대한 router 등록
-const peopleNumberRouter = require('./routes/people_numbers');
-app.use('/api/peopleNumbers', peopleNumberRouter);
+// [headcounts] collection에 대한 router 등록
+const headcountRouter = require('./routes/headcounts');
+app.use('/api/headcounts', headcountRouter);
 
 // [markers] collection에 대한 router 등록
 const markerRouter = require('./routes/markers');
