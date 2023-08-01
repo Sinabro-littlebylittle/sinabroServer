@@ -14,6 +14,29 @@ const createHashedPassword = (password) => {
   return crypto.createHash('sha512').update(password).digest('base64');
 };
 
+router.get('/public/search', async (req, res) => {
+  const email = req.query.email;
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!regex.test(email)) {
+    return res.status(400).json({ error: 'Bad request' });
+  }
+
+  try {
+    // 이메일이 이미 존재하는지 확인
+    const existingUser = await UserInfo.findOne({ email });
+    // 이미 존재하는 이메일이면 에러 메시지를 전달
+    if (existingUser) {
+      return res.status(400).json({
+        error: 'User with this email already exists',
+      });
+    }
+
+    return res.status(200).json({ message: '아잉눈' });
+  } catch (err) {
+    return res.status(500).json({ error: err.error });
+  }
+});
+
 /**
  * @swagger
  * /api/auth/public/login:
