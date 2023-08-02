@@ -26,12 +26,12 @@ router.get('/public/search', async (req, res) => {
     const existingUser = await UserInfo.findOne({ email });
     // 이미 존재하는 이메일이면 에러 메시지를 전달
     if (existingUser) {
-      return res.status(400).json({
+      return res.status(409).json({
         error: 'User with this email already exists',
       });
     }
 
-    return res.status(200).json({ message: '아잉눈' });
+    return res.status(200).json({ error: 'OK' });
   } catch (err) {
     return res.status(500).json({ error: err.error });
   }
