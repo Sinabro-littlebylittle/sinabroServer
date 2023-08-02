@@ -89,12 +89,12 @@ router.get('/public/search', async (req, res) => {
  */
 router.post('/public/login', async (req, res) => {
   if (!req.body.email || !req.body.password) {
-    return res.status(400).json({ error: 'bad request' });
+    return res.status(400).json({ error: 'Bad request' });
   }
 
   try {
     const user = await UserInfo.findOne({
-      id: req.body.id,
+      email: req.body.email,
       password: createHashedPassword(req.body.password),
     });
     if (user) {
@@ -182,7 +182,7 @@ router.post('/public/login', async (req, res) => {
  */
 router.post('/public/signup', async (req, res) => {
   if (!req.body.email || !req.body.password || !req.body.username) {
-    return res.status(400).json({ error: 'bad request' });
+    return res.status(400).json({ error: 'Bad request' });
   }
 
   try {
