@@ -37,21 +37,19 @@ const router = express.Router();
 // :id값에 따른 document 중 placeId값이 :id와 동일한 document 설정 및 조회
 const getPlaceInformations = async (req, res, next) => {
   const placeId = req.params.id;
-  if (!mongoose.Types.ObjectId.isValid(placeId)) {
+  if (!mongoose.Types.ObjectId.isValid(placeId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
-  }
 
   let placeInformations;
   try {
     placeInformations = await Headcount.find({ placeId });
-    if (!placeInformations) {
-      return res.status(404).json({ error: 'Not Found' });
-    }
+    if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
+
+    res.placeInformations = placeInformations;
+    next();
   } catch (err) {
     return res.status(500).json({ error: err.error });
   }
-  res.placeInformations = placeInformations;
-  next();
 };
 
 // 인자로 들어온 배열의 각 요소인 Object에 updateElapsedTime 속성을 기준에 맞게 추가함
@@ -453,6 +451,14 @@ router.get(
  *             error:
  *               type: string
  *               example: "Bad Request"
+ *       401:
+ *         description: Unauthorized
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Unauthorized"
  *       415:
  *         description: Unsupported Media Type
  *         schema:
