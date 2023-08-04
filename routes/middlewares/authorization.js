@@ -23,7 +23,7 @@ const verifyToken = (req, res, next) => {
       return res.status(401).json({ error: 'Token expried' });
     }
 
-    res.locals.sub = decoded.id;
+    res.locals.sub = decoded.sub;
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Unauthorized' });

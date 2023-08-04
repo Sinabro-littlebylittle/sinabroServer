@@ -42,22 +42,19 @@ const router = express.Router();
 // :id값에 따른 document 중 _id값이 :id와 동일한 document 설정 및 조회
 const getPlace = async (req, res, next) => {
   const placeId = req.params.id;
-  if (!mongoose.Types.ObjectId.isValid(placeId)) {
+  if (!mongoose.Types.ObjectId.isValid(placeId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
-  }
 
   let place;
   try {
     place = await Place.findById(placeId);
-    if (!place) {
-      return res.status(404).json({ error: err.error });
-    }
+    if (!place) return res.status(404).json({ error: err.error });
+
+    res.place = place;
+    next();
   } catch (err) {
     return res.status(500).json({ error: err.error });
   }
-
-  res.place = place;
-  next();
 };
 
 /**
