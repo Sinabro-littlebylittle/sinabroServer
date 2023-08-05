@@ -14,6 +14,48 @@ const createHashedPassword = (password) => {
   return crypto.createHash('sha512').update(password).digest('base64');
 };
 
+/**
+ * @swagger
+ * /api/auth/public/search:
+ *   get:
+ *     tags:
+ *       - 회원 인증 API
+ *     summary: 이메일 중복 확인
+ *     security:
+ *       - JWT: []
+ *     description: 쿼리로 들어온 이메일과 DB 내의 이메일들에 대하여 중복 여부를 확인합니다.
+ *     parameters:
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: OK
+ *         schema:
+ *           type: object
+ *           properties:
+ *             message:
+ *               type: string
+ *               example: "User with this email already exists"
+ *       409:
+ *         description: Bad Request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "User with this email already exists"
+ *       500:
+ *         description: Internal Server Error
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Internal Server Error"
+ */
 router.get('/public/search', async (req, res) => {
   const email = req.query.email;
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -31,7 +73,7 @@ router.get('/public/search', async (req, res) => {
       });
     }
 
-    return res.status(200).json({ error: 'OK' });
+    return res.status(200).json({ message: 'OK' });
   } catch (err) {
     return res.status(500).json({ error: err.error });
   }
