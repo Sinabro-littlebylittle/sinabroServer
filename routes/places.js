@@ -125,9 +125,9 @@ router.get('/', async (req, res) => {
  *             detailAddress:
  *               type: string
  *             latitude:
- *               type: number
+ *               type: string
  *             longitude:
- *               type: number
+ *               type: string
  *     responses:
  *       201:
  *         description: Created
@@ -176,8 +176,8 @@ router.post('/private', verifyToken, async (req, res) => {
     !req.body.placeName ||
     !req.body.address ||
     !req.body.detailAddress ||
-    typeof req.body.latitude !== 'number' ||
-    typeof req.body.longitude !== 'number'
+    !req.body.latitude ||
+    !req.body.longitude
   ) {
     return res.status(400).json({ error: 'Bad Request' });
   }
