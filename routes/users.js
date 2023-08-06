@@ -1,9 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const UserInfo = require('../models/user_info');
+const crypto = require('crypto');
 const { verifyToken } = require('./middlewares/authorization');
-const Place = require('../models/place');
 const router = express.Router();
+
+const createHashedPassword = (password) => {
+  return crypto.createHash('sha512').update(password).digest('base64');
+};
 
 const getUserInfo = async (req, res, next) => {
   let userId = req.params.id;
@@ -15,12 +19,12 @@ const getUserInfo = async (req, res, next) => {
   let userInfo;
   try {
     userInfo = await UserInfo.findById(userId).select('-password -__v');
-    if (!userInfo) res.status(404).json({ error: 'Not Found' });
+    if (!userInfo) return res.status(404).json({ error: 'Not Found' });
 
     res.userInfo = userInfo;
     next();
   } catch (err) {
-    return res.status(500).json({ error: err.error });
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -30,10 +34,10 @@ const getUserInfo = async (req, res, next) => {
  *   get:
  *    tags:
  *      - 사용자 관련 API
- *    summary: Get User Information
+ *    summary: 회원 본인 정보 조회
  *    security:
  *      - JWT: []
- *    description: Retrieve the user information based on the user ID.
+ *    description: 회원 본인의 정보를 조회합니다.
  *    responses:
  *      200:
  *        description: OK
@@ -85,5 +89,74 @@ router.get('/private/info', verifyToken, getUserInfo, async (req, res) => {
   const userInfo = res.userInfo;
   return res.status(200).json(userInfo);
 });
+
+/**
+ * @swagger
+ * /api/user/private/password:
+ *   patch:
+ *    tags:
+ *      - 사용자 관련 API
+ *    summary: 비밀번호 변경
+ *    security:
+ *      - JWT: []
+ *    description: 사용자의 계정 비밀번호를 변경합니다.
+ *    parameters:
+ *      - in: body
+ *        name: passwordRequest
+ *        required: true
+ *        schema:
+ *          type: object
+ *          properties:
+ *            newPassword:
+ *              type: string
+ *    responses:
+ *      200:
+ *        description: OK
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "OK"
+ *      401:
+ *        description: Unauthorized
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Unauthorized"
+ *      500:
+ *        description: Internal Server Error
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Internal Server Error"
+ */
+router.patch(
+  '/private/password',
+  verifyToken,
+  getUserInfo,
+  async (req, res) => {
+    const { newPassword } = req.body;
+
+    if (!newPassword) return res.status(400).json({ error: 'Bad Request' });
+
+    const userInfo = res.userInfo;
+
+    try {
+      const result = await UserInfo.updateOne(
+        { email: userInfo.email }, // Filter
+        { $set: { password: createHashedPassword(newPassword) } } // Update action
+      );
+
+      return res.status(200).json({ message: 'OK' });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
 
 module.exports = router;

@@ -66,7 +66,7 @@ router.get('/', async (req, res) => {
 
     res.status(200).json(markers);
   } catch (err) {
-    res.status(500).json({ error: err.error });
+    res.status(500).json({ error: err.message });
   }
 });
 

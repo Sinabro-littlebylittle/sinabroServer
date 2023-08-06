@@ -75,7 +75,7 @@ router.get('/public/search', async (req, res) => {
 
     return res.status(200).json({ message: 'OK' });
   } catch (err) {
-    return res.status(500).json({ error: err.error });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -130,14 +130,15 @@ router.get('/public/search', async (req, res) => {
  *               example: "Internal Server Error"
  */
 router.post('/public/login', async (req, res) => {
-  if (!req.body.email || !req.body.password) {
+  const { email, password } = req.body;
+
+  if (!email || !password)
     return res.status(400).json({ error: 'Bad request' });
-  }
 
   try {
     const user = await UserInfo.findOne({
-      email: req.body.email,
-      password: createHashedPassword(req.body.password),
+      email,
+      password: createHashedPassword(password),
     });
     if (user) {
       options.sub = user._id;
@@ -151,7 +152,7 @@ router.post('/public/login', async (req, res) => {
 
     return res.status(401).json({ error: 'Invalid credentials' });
   } catch (err) {
-    return res.status(500).json({ error: err.error });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -223,13 +224,15 @@ router.post('/public/login', async (req, res) => {
  *               example: "Internal Server Error"
  */
 router.post('/public/signup', async (req, res) => {
-  if (!req.body.email || !req.body.password || !req.body.username) {
+  const { email, password, username } = req.body;
+
+  if (!email || !password || !username) {
     return res.status(400).json({ error: 'Bad request' });
   }
 
   try {
     // 이메일이 이미 존재하는지 확인
-    const existingUser = await UserInfo.findOne({ email: req.body.email });
+    const existingUser = await UserInfo.findOne({ email });
 
     // 이미 존재하는 이메일이면 에러 메시지를 전달
     if (existingUser) {
@@ -238,19 +241,17 @@ router.post('/public/signup', async (req, res) => {
       });
     }
 
-    const encryptedPassword = createHashedPassword(req.body.password);
-
     const user = new UserInfo({
-      email: req.body.email,
-      password: encryptedPassword,
-      username: req.body.username,
+      email,
+      password: createHashedPassword(password),
+      username,
       role: 'member',
     });
 
     const newUser = await new UserInfo(user).save();
     res.status(201).json(newUser);
   } catch (err) {
-    return res.status(500).json({ error: err.error });
+    return res.status(500).json({ error: err.message });
   }
 });
 

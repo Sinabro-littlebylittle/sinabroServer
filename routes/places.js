@@ -48,12 +48,12 @@ const getPlace = async (req, res, next) => {
   let place;
   try {
     place = await Place.findById(placeId);
-    if (!place) return res.status(404).json({ error: err.error });
+    if (!place) return res.status(404).json({ error: err.message });
 
     res.place = place;
     next();
   } catch (err) {
-    return res.status(500).json({ error: err.error });
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -97,7 +97,7 @@ router.get('/', async (req, res) => {
     }
     res.status(200).json(places);
   } catch (err) {
-    res.status(500).json({ error: err.error });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -172,23 +172,18 @@ router.get('/', async (req, res) => {
  *               example: "Internal Server Error"
  */
 router.post('/private', verifyToken, async (req, res) => {
-  if (
-    !req.body.placeName ||
-    !req.body.address ||
-    !req.body.detailAddress ||
-    !req.body.latitude ||
-    !req.body.longitude
-  ) {
+  const { placeName, address, detailAddress, latitude, longitude } = req.body;
+
+  if (!placeName || !address || !detailAddress || !latitude || !longitude)
     return res.status(400).json({ error: 'Bad Request' });
-  }
 
   let markerId;
   let newMarker;
 
   try {
     marker = await Marker.findOne({
-      latitude: req.body.latitude,
-      longitude: req.body.longitude,
+      latitude,
+      longitude,
     });
     if (!marker) {
       newMarker = new Marker(req.body);
@@ -202,7 +197,7 @@ router.post('/private', verifyToken, async (req, res) => {
       markerId = marker.id;
     }
   } catch (err) {
-    res.status(500).json({ error: err.error });
+    res.status(500).json({ error: err.message });
   }
 
   try {
@@ -220,14 +215,14 @@ router.post('/private', verifyToken, async (req, res) => {
     const newHeadcount = await headcount.save();
     res.status(201).json(newPlace);
   } catch (err) {
-    res.status(500).json({ error: err.error });
+    res.status(500).json({ error: err.message });
   }
 });
 
 /**
  * @swagger
  * /api/places/private/{placeId}:
- *   patch:
+ *   put:
  *     tags:
  *       - Places Collection 기반 API
  *     summary: 장소 정보 업데이트
@@ -284,15 +279,17 @@ router.post('/private', verifyToken, async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.patch('/private/:id', verifyToken, getPlace, async (req, res) => {
-  if (req.body.placeName != null) res.place.placeName = req.body.placeName;
-  if (req.body.detailAddress != null)
-    res.place.detailAddress = req.body.detailAddress;
+router.put('/private/:id', verifyToken, getPlace, async (req, res) => {
+  const { placeName, detailAdress } = req.body;
+
+  if (!placeName) res.place.placeName = placeName;
+  if (!detailAddress) res.place.detailAddress = detailAddress;
+
   try {
     const updatedPlace = await res.place.save();
     res.status(200).json(updatedPlace);
   } catch (err) {
-    res.status(500).json({ error: err.error });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -358,11 +355,11 @@ router.delete('/private/:id', verifyToken, getPlace, async (req, res) => {
         // markers collection 내 삭제하려는 장소의 _id값을 지닌 연관 document 제거
         await Marker.deleteOne({ _id: res.place.markerId });
       } catch (err) {
-        res.status(500).json({ error: err.error });
+        res.status(500).json({ error: err.message });
       }
     }
   } catch (err) {
-    res.status(500).json({ error: err.error });
+    res.status(500).json({ error: err.message });
   }
 
   try {
@@ -371,7 +368,7 @@ router.delete('/private/:id', verifyToken, getPlace, async (req, res) => {
     await res.place.deleteOne();
     res.status(200).json({ remainingPlacesCnt: places.length - 1 });
   } catch (err) {
-    res.status(500).json({ error: err.error });
+    res.status(500).json({ error: err.message });
   }
 });
 
