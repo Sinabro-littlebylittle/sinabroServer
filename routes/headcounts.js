@@ -48,7 +48,7 @@ const getPlaceInformations = async (req, res, next) => {
     res.placeInformations = placeInformations;
     next();
   } catch (err) {
-    return res.status(500).json({ error: err.error });
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -133,7 +133,7 @@ router.get('/', async (req, res) => {
 
     res.status(200).json(placeInformations);
   } catch (err) {
-    res.status(500).json({ error: err.error });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -221,7 +221,7 @@ router.get('/public/placeInformations', async (req, res) => {
 
     res.status(200).json(updatedPlaceInformations);
   } catch (err) {
-    res.status(500).json({ error: err.error });
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -395,7 +395,7 @@ router.get(
       );
       res.status(200).json(updatedPlaceInformations);
     } catch (err) {
-      res.status(500).json({ error: err.error });
+      res.status(500).json({ error: err.message });
     }
   }
 );
@@ -493,7 +493,7 @@ router.post(
       const newHeadcount = await headcount.save();
       res.status(201).json(newHeadcount);
     } catch (err) {
-      res.status(500).json({ error: err.error });
+      res.status(500).json({ error: err.message });
     }
   }
 );
