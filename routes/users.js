@@ -83,7 +83,6 @@ const getUserInfo = async (req, res, next) => {
  */
 router.get('/private/info', verifyToken, getUserInfo, async (req, res) => {
   const userInfo = res.userInfo;
-  console.log(userInfo);
   return res.status(200).json(userInfo);
 });
 
