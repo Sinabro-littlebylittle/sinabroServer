@@ -225,10 +225,10 @@ router.post('/private', verifyToken, async (req, res) => {
  *   put:
  *     tags:
  *       - Places Collection 기반 API
- *     summary: 장소 정보 업데이트
+ *     summary: 장소 정보 수정
  *     security:
  *       - JWT: []
- *     description: 특정 장소를 새로운 정보로 업데이트 합니다.
+ *     description: 특정 장소를 새로운 정보로 수정합니다.
  *     parameters:
  *       - in: path
  *         name: placeId
@@ -254,6 +254,14 @@ router.post('/private', verifyToken, async (req, res) => {
  *         description: OK
  *         schema:
  *           $ref: '#/definitions/Place'
+ *       400:
+ *         description: Bad request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             errror:
+ *               type: string
+ *               example: "Bad Request"
  *       401:
  *         description: Unauthorized
  *         schema:
@@ -280,10 +288,12 @@ router.post('/private', verifyToken, async (req, res) => {
  *               example: "Internal Server Error"
  */
 router.put('/private/:id', verifyToken, getPlace, async (req, res) => {
-  const { placeName, detailAdress } = req.body;
+  const { placeName, detailAddress } = req.body;
+  if (!placeName || !detailAddress)
+    return res.status(400).json({ error: 'Bad Request' });
 
-  if (!placeName) res.place.placeName = placeName;
-  if (!detailAddress) res.place.detailAddress = detailAddress;
+  res.place.placeName = placeName;
+  res.place.detailAddress = detailAddress;
 
   try {
     const updatedPlace = await res.place.save();
