@@ -107,9 +107,9 @@ router.get('/private/info', verifyToken, getUserInfo, async (req, res) => {
  *        schema:
  *          type: object
  *          properties:
- *            newUsername:
+ *            username:
  *              type: string
- *            newEmail:
+ *            email:
  *              type: string
  *    responses:
  *      200:
@@ -170,9 +170,9 @@ router.get('/private/info', verifyToken, getUserInfo, async (req, res) => {
  *              example: "Internal Server Error"
  */
 router.patch('/private/info', verifyToken, getUserInfo, async (req, res) => {
-  const { newUsername, newEmail } = req.body;
+  const { username, email } = req.body;
 
-  if (!newUsername || !newEmail) {
+  if (!username || !email) {
     return res.status(400).json({ error: 'Bad Request' });
   }
 
@@ -182,7 +182,7 @@ router.patch('/private/info', verifyToken, getUserInfo, async (req, res) => {
     // 이메일이 이미 존재하는지 확인
     const existingUser = await UserInfo.findOne({
       email: {
-        $eq: newEmail,
+        $eq: email,
         $ne: userInfo.email,
       },
     });
@@ -194,7 +194,7 @@ router.patch('/private/info', verifyToken, getUserInfo, async (req, res) => {
 
     const result = await UserInfo.updateMany(
       { _id: userInfo._id }, // Filter
-      { $set: { username: newUsername, email: newEmail } } // Update action
+      { $set: { username, email } } // Update action
     );
 
     return res.status(200).json({ message: 'OK' });
@@ -220,7 +220,7 @@ router.patch('/private/info', verifyToken, getUserInfo, async (req, res) => {
  *        schema:
  *          type: object
  *          properties:
- *            newPassword:
+ *            password:
  *              type: string
  *    responses:
  *      200:
@@ -277,16 +277,16 @@ router.patch(
   verifyToken,
   getUserInfo,
   async (req, res) => {
-    const { newPassword } = req.body;
+    const { password } = req.body;
 
-    if (!newPassword) return res.status(400).json({ error: 'Bad Request' });
+    if (!password) return res.status(400).json({ error: 'Bad Request' });
 
     const userInfo = res.userInfo;
 
     try {
       const result = await UserInfo.updateOne(
         { _id: userInfo._id }, // Filter
-        { $set: { password: createHashedPassword(newPassword) } } // Update action
+        { $set: { password: createHashedPassword(password) } } // Update action
       );
 
       return res.status(200).json({ message: 'OK' });
