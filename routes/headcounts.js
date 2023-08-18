@@ -34,15 +34,14 @@ const router = express.Router();
  *         description: version key
  */
 
-// :id값에 따른 document 중 placeId값이 :id와 동일한 document 설정 및 조회
+// :id값에 따른 document 중 placeId값이 :id와 동일한 document(s) 설정 및 조회
 const getPlaceInformations = async (req, res, next) => {
   const placeId = req.params.id;
   if (!mongoose.Types.ObjectId.isValid(placeId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
 
-  let placeInformations;
   try {
-    placeInformations = await Headcount.find({ placeId });
+    const placeInformations = await Headcount.find({ placeId });
     if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
 
     res.placeInformations = placeInformations;
@@ -98,7 +97,7 @@ const addUpdateElapsedTimeProp = (currPlaceInformations) => {
  * /api/headcounts:
  *   get:
  *     tags:
- *       - Headcount Collection 기반 API
+ *       - Headcounts Collection 기반 API
  *     summary: (headcounts) Collection 내의 모든 Document(s) 반환 ➜ [In-App use ❌]
  *     description: (headcounts) collection 내의 모든 데이터 목록을 반환합니다.
  *     responses:
@@ -127,13 +126,11 @@ const addUpdateElapsedTimeProp = (currPlaceInformations) => {
 router.get('/', async (req, res) => {
   try {
     const placeInformations = await Headcount.find();
-    if (!placeInformations) {
-      return res.status(404).json({ error: 'Not Found' });
-    }
+    if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
 
-    res.status(200).json(placeInformations);
+    return res.status(200).json(placeInformations);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -142,7 +139,7 @@ router.get('/', async (req, res) => {
  * /api/headcounts/public/placeInformations:
  *   get:
  *     tags:
- *       - Headcount Collection 기반 API
+ *       - Headcounts Collection 기반 API
  *     summary: 등록된 모든 장소에 대한 세부 정보 반환
  *     description: 각 장소에 대한 인원수와 장소 세부 정보 목록을 반환합니다.
  *     responses:
@@ -219,9 +216,9 @@ router.get('/public/placeInformations', async (req, res) => {
     const updatedPlaceInformations =
       addUpdateElapsedTimeProp(placeInformations);
 
-    res.status(200).json(updatedPlaceInformations);
+    return res.status(200).json(updatedPlaceInformations);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -230,7 +227,7 @@ router.get('/public/placeInformations', async (req, res) => {
  * /api/headcounts/{placeId}:
  *   get:
  *     tags:
- *       - Headcount Collection 기반 API
+ *       - Headcounts Collection 기반 API
  *     summary: 특정 장소에 대한 인원수 세부 정보 반환 ➜ [In-App use ❌]
  *     description: 특정 장소에 대한 인원수 세부 정보를 반환합니다.
  *     parameters:
@@ -287,7 +284,7 @@ router.get('/:id', getPlaceInformations, async (req, res) => {
   const updatedPlaceInformations = addUpdateElapsedTimeProp(
     res.placeInformations
   );
-  res.status(200).json(updatedPlaceInformations[0]);
+  return res.status(200).json(updatedPlaceInformations[0]);
 });
 
 /**
@@ -295,7 +292,7 @@ router.get('/:id', getPlaceInformations, async (req, res) => {
  * /api/headcounts/public/{markerId}/placeInformations:
  *   get:
  *     tags:
- *       - Headcount Collection 기반 API
+ *       - Headcounts Collection 기반 API
  *     summary: 특정 마커 위치에 대한 장소 정보 및 인원수 세부 정보 반환
  *     description: 특정 마커 위치에 대한 장소 정보 및 인원수 세부 정보를 반환합니다.
  *     parameters:
@@ -393,9 +390,9 @@ router.get(
       const updatedPlaceInformations = addUpdateElapsedTimeProp(
         filteredPlaceInformations
       );
-      res.status(200).json(updatedPlaceInformations);
+      return res.status(200).json(updatedPlaceInformations);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: err.message });
     }
   }
 );
@@ -405,7 +402,7 @@ router.get(
  * /api/headcounts/private/{placeId}:
  *   post:
  *     tags:
- *       - Headcount Collection 기반 API
+ *       - Headcounts Collection 기반 API
  *     summary: 특정 장소에 대한 인원수 등록
  *     security:
  *       - JWT: []
@@ -481,9 +478,8 @@ router.post(
   verifyToken,
   getPlaceInformations,
   async (req, res) => {
-    if (typeof req.body.headcount !== 'number') {
+    if (typeof req.body.headcount !== 'number')
       return res.status(400).json({ error: 'Bad Request' });
-    }
 
     const headcount = new Headcount(req.body);
     headcount.placeId = req.params.id;
@@ -491,9 +487,9 @@ router.post(
 
     try {
       const newHeadcount = await headcount.save();
-      res.status(201).json(newHeadcount);
+      return res.status(201).json(newHeadcount);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: err.message });
     }
   }
 );
