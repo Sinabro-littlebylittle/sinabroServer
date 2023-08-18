@@ -69,6 +69,10 @@ app.use('/api/headcounts', headcountRouter);
 const markerRouter = require('./routes/markers');
 app.use('/api/markers', markerRouter);
 
+// [bookmarks] collection에 대한 router 등록
+const bookmarkRouter = require('./routes/bookmarks');
+app.use('/api/bookmarks', bookmarkRouter);
+
 app.listen(port, () => {
   console.log('Server started on port 5050');
 });
