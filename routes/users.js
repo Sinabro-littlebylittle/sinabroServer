@@ -16,9 +16,8 @@ const getUserInfo = async (req, res, next) => {
   if (!mongoose.Types.ObjectId.isValid(userId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
 
-  let userInfo;
   try {
-    userInfo = await UserInfo.findById(userId).select('-password -__v');
+    const userInfo = await UserInfo.findById(userId).select('-password -__v');
     if (!userInfo) return res.status(404).json({ error: 'Not Found' });
 
     res.userInfo = userInfo;
@@ -117,7 +116,7 @@ router.get('/private/info', verifyToken, getUserInfo, async (req, res) => {
  *        schema:
  *          type: object
  *          properties:
- *            error:
+ *            message:
  *              type: string
  *              example: "OK"
  *      400:
@@ -228,7 +227,7 @@ router.patch('/private/info', verifyToken, getUserInfo, async (req, res) => {
  *        schema:
  *          type: object
  *          properties:
- *            error:
+ *            message:
  *              type: string
  *              example: "OK"
  *      400:
