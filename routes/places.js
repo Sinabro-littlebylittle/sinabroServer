@@ -45,9 +45,8 @@ const getPlace = async (req, res, next) => {
   if (!mongoose.Types.ObjectId.isValid(placeId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
 
-  let place;
   try {
-    place = await Place.findById(placeId);
+    const place = await Place.findById(placeId);
     if (!place) return res.status(404).json({ error: err.message });
 
     res.place = place;
@@ -91,13 +90,11 @@ const getPlace = async (req, res, next) => {
 router.get('/', async (req, res) => {
   try {
     const places = await Place.find();
-    if (!places) {
-      res.status(404).json({ error: 'Not Found' });
-      return;
-    }
-    res.status(200).json(places);
+    if (!places) return res.status(404).json({ error: 'Not Found' });
+
+    return res.status(200).json(places);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -191,13 +188,13 @@ router.post('/private', verifyToken, async (req, res) => {
       try {
         await newMarker.save();
       } catch (err) {
-        res.status(400).json({ error: 'Bad Request' });
+        return res.status(400).json({ error: 'Bad Request' });
       }
     } else {
       markerId = marker.id;
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 
   try {
@@ -213,9 +210,9 @@ router.post('/private', verifyToken, async (req, res) => {
     });
 
     const newHeadcount = await headcount.save();
-    res.status(201).json(newPlace);
+    return res.status(201).json(newPlace);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -297,9 +294,9 @@ router.put('/private/:id', verifyToken, getPlace, async (req, res) => {
 
   try {
     const updatedPlace = await res.place.save();
-    res.status(200).json(updatedPlace);
+    return res.status(200).json(updatedPlace);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -365,20 +362,20 @@ router.delete('/private/:id', verifyToken, getPlace, async (req, res) => {
         // markers collection 내 삭제하려는 장소의 _id값을 지닌 연관 document 제거
         await Marker.deleteOne({ _id: res.place.markerId });
       } catch (err) {
-        res.status(500).json({ error: err.message });
+        return res.status(500).json({ error: err.message });
       }
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 
   try {
     // (headcounts) collection 내 삭제하려는 장소의 _id값을 지닌 연관 document(들) 일괄 제거
     await Headcount.deleteMany({ placeId: res.place._id });
     await res.place.deleteOne();
-    res.status(200).json({ remainingPlacesCnt: places.length - 1 });
+    return res.status(200).json({ remainingPlacesCnt: places.length - 1 });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
