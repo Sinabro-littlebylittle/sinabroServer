@@ -86,11 +86,9 @@ router.get('/public/search', async (req, res) => {
  *     tags:
  *       - 회원 인증 API
  *     summary: 로그인
+ *     security:
+ *      - JWT: []
  *     description: 사용자 (이메일/비밀번호)를 통해 로그인 후 액세스 토큰을 발급합니다.
- *     consumes:
- *       - application/json
- *     produces:
- *       - application/json
  *     parameters:
  *       - in: body
  *         name: loginRequest
@@ -249,7 +247,7 @@ router.post('/public/signup', async (req, res) => {
     });
 
     const newUser = await new UserInfo(user).save();
-    res.status(201).json(newUser);
+    return res.status(201).json(newUser);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
