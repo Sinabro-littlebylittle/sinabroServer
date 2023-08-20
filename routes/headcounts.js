@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Headcount = require('../models/headcount');
+const Place = require('../models/place');
 const { getFormattedDate } = require('../utils/dateUtils');
 const { verifyToken } = require('./middlewares/authorization');
 const router = express.Router();
@@ -18,9 +19,11 @@ const router = express.Router();
  *     properties:
  *       _id:
  *         type: string
+ *         format: ObjectId
  *         description: headcountId
  *       placeId:
  *         type: string
+ *         format: ObjectId
  *         description: headcountId 연관된 placeId
  *       headcount:
  *         type: number
@@ -37,6 +40,8 @@ const router = express.Router();
 // :id값에 따른 document 중 placeId값이 :id와 동일한 document(s) 설정 및 조회
 const getPlaceInformations = async (req, res, next) => {
   const placeId = req.params.id;
+
+  if (!placeId) return res.status(400).json({ error: 'Bad Request' });
   if (!mongoose.Types.ObjectId.isValid(placeId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
 
@@ -45,6 +50,25 @@ const getPlaceInformations = async (req, res, next) => {
     if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
 
     res.placeInformations = placeInformations;
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// :id값에 따른 document 중 _id값이 :id와 동일한 document 설정 및 조회
+const getPlace = async (req, res, next) => {
+  const placeId = req.params.id;
+
+  if (!placeId) return res.status(400).json({ error: 'Bad Request' });
+  if (!mongoose.Types.ObjectId.isValid(placeId))
+    return res.status(415).json({ error: 'Unsupported Media Type' });
+
+  try {
+    const place = await Place.findById(placeId);
+    if (!place) return res.status(404).json({ error: 'Not Found' });
+
+    res.place = place;
     next();
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -255,6 +279,14 @@ router.get('/public/placeInformations', async (req, res) => {
  *               type: number
  *             updateElapsedTime:
  *               type: number
+ *       400:
+ *         description: Bad Request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Bad Request"
  *       404:
  *         description: Not Found
  *         schema:
@@ -344,6 +376,14 @@ router.get('/:id', getPlaceInformations, async (req, res) => {
  *                 type: number
  *               updateElapsedTime:
  *                 type: number
+ *       400:
+ *         description: Bad Request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Bad Request"
  *       404:
  *         description: Not Found
  *         schema:
@@ -473,25 +513,23 @@ router.get(
  *               type: string
  *               example: "Internal Server Error"
  */
-router.post(
-  '/private/:id',
-  verifyToken,
-  getPlaceInformations,
-  async (req, res) => {
-    if (typeof req.body.headcount !== 'number')
-      return res.status(400).json({ error: 'Bad Request' });
+router.post('/private/:id', verifyToken, getPlace, async (req, res) => {
+  if (
+    (!req.body.headcount && req.body.headcount < 0) ||
+    typeof req.body.headcount !== 'number'
+  )
+    return res.status(400).json({ error: 'Bad Request' });
 
-    const headcount = new Headcount(req.body);
-    headcount.placeId = req.params.id;
-    headcount.createdTime = getFormattedDate();
+  const headcount = new Headcount(req.body);
+  headcount.placeId = req.params.id;
+  headcount.createdTime = getFormattedDate();
 
-    try {
-      const newHeadcount = await headcount.save();
-      return res.status(201).json(newHeadcount);
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  try {
+    const newHeadcount = await headcount.save();
+    return res.status(201).json(newHeadcount);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
-);
+});
 
 module.exports = router;

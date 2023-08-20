@@ -21,6 +21,7 @@ const router = express.Router();
  *     properties:
  *       _id:
  *         type: string
+ *         format: ObjectId
  *         description: placeId
  *       placeName:
  *         type: string
@@ -33,6 +34,7 @@ const router = express.Router();
  *         description: 장소 세부 주소
  *       markerId:
  *         type: string
+ *         format: ObjectId
  *         description: placeId와 연관된 markerId
  *       __v:
  *         type: number
@@ -42,12 +44,14 @@ const router = express.Router();
 // :id값에 따른 document 중 _id값이 :id와 동일한 document 설정 및 조회
 const getPlace = async (req, res, next) => {
   const placeId = req.params.id;
+
+  if (!placeId) return res.status(400).json({ error: 'Bad Request' });
   if (!mongoose.Types.ObjectId.isValid(placeId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
 
   try {
     const place = await Place.findById(placeId);
-    if (!place) return res.status(404).json({ error: err.message });
+    if (!place) return res.status(404).json({ error: 'Not Found' });
 
     res.place = place;
     next();
@@ -178,26 +182,18 @@ router.post('/private', verifyToken, async (req, res) => {
   let newMarker;
 
   try {
-    marker = await Marker.findOne({
+    const marker = await Marker.findOne({
       latitude,
       longitude,
     });
     if (!marker) {
       newMarker = new Marker(req.body);
       markerId = newMarker.id;
-      try {
-        await newMarker.save();
-      } catch (err) {
-        return res.status(400).json({ error: 'Bad Request' });
-      }
+      await newMarker.save();
     } else {
       markerId = marker.id;
     }
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
 
-  try {
     const place = new Place(req.body);
     place.markerId = markerId;
 
@@ -325,6 +321,14 @@ router.put('/private/:id', verifyToken, getPlace, async (req, res) => {
  *            remainingPlacesCnt:
  *              type: number
  *              example: "0"
+ *       400:
+ *         description: Bad Request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Bad Request"
  *       401:
  *         description: Unauthorized
  *         schema:
@@ -351,25 +355,16 @@ router.put('/private/:id', verifyToken, getPlace, async (req, res) => {
  *               example: "Internal Server Error"
  */
 router.delete('/private/:id', verifyToken, getPlace, async (req, res) => {
-  let places;
   try {
-    places = await Place.find({
+    const places = await Place.find({
       markerId: res.place.markerId,
     });
     // 삭제하려는 장소 위치(위도, 경도)에 등록된 장소가 한 곳 일 때 마커 데이터도 함께 제거
     if (places.length === 1) {
-      try {
-        // markers collection 내 삭제하려는 장소의 _id값을 지닌 연관 document 제거
-        await Marker.deleteOne({ _id: res.place.markerId });
-      } catch (err) {
-        return res.status(500).json({ error: err.message });
-      }
+      // markers collection 내 삭제하려는 장소의 _id값을 지닌 연관 document 제거
+      await Marker.deleteOne({ _id: res.place.markerId });
     }
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
 
-  try {
     // (headcounts) collection 내 삭제하려는 장소의 _id값을 지닌 연관 document(들) 일괄 제거
     await Headcount.deleteMany({ placeId: res.place._id });
     await res.place.deleteOne();

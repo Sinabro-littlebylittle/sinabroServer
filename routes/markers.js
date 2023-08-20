@@ -14,6 +14,7 @@ const router = express.Router();
  *     properties:
  *       _id:
  *         type: string
+ *         format: ObjectId
  *         description: markerId
  *       latitude:
  *         type: string
