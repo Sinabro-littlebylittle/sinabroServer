@@ -13,6 +13,7 @@ const getUserInfo = async (req, res, next) => {
   let userId = req.params.id;
   if (!userId) userId = res.locals.sub;
 
+  if (!userId) return res.status(400).json({ error: 'Bad Request' });
   if (!mongoose.Types.ObjectId.isValid(userId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
 
@@ -51,6 +52,14 @@ const getUserInfo = async (req, res, next) => {
  *              type: string
  *            role:
  *              type: string
+ *      400:
+ *        description: Bad Request
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Bad Request"
  *      401:
  *        description: Unauthorized
  *        schema:
