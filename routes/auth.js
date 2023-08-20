@@ -40,7 +40,7 @@ const createHashedPassword = (password) => {
  *               type: string
  *               example: "User with this email already exists"
  *       409:
- *         description: Bad Request
+ *         description: Conflict
  *         schema:
  *           type: object
  *           properties:
