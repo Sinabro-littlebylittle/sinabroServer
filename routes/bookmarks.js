@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Bookmark = require('../models/bookmark');
 const UserInfo = require('../models/user_info');
+const Place = require('../models/place');
 const { verifyToken } = require('./middlewares/authorization');
 const router = express.Router();
 
@@ -18,16 +19,24 @@ const router = express.Router();
  *     properties:
  *       _id:
  *         type: string
+ *         format: ObjectId
  *         description: bookmarkId
  *       userId:
  *         type: string
+ *         format: ObjectId
  *         description: bookmarkId와 연관된 userId
  *       bookmarkName:
  *         type: string
- *         description: 북마크 리스트 이름
+ *         description: 즐겨찾기 리스트 이름
  *       iconColor:
  *         type: string
- *         description: 북마크 리스트 아이콘 색상
+ *         description: 즐겨찾기 리스트 아이콘 색상
+ *       bookmarkedPlaceId:
+ *         type: array
+ *         items:
+ *           type: string
+ *           format: ObjectId
+ *         description: 즐겨찾기된 장소ID 배열
  *       __v:
  *         type: number
  *         description: version key
@@ -36,6 +45,8 @@ const router = express.Router();
 // :id값에 따른 document 중 bookmarkId값이 :id와 동일한 document 설정 및 조회
 const getBookmark = async (req, res, next) => {
   const bookmarkId = req.params.id;
+
+  if (!bookmarkId) return res.status(400).json({ error: 'Bad Request' });
   if (!mongoose.Types.ObjectId.isValid(bookmarkId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
 
@@ -55,6 +66,7 @@ const getUserInfo = async (req, res, next) => {
   let userId = req.params.id;
   if (!userId) userId = res.locals.sub;
 
+  if (!userId) return res.status(400).json({ error: 'Bad Request' });
   if (!mongoose.Types.ObjectId.isValid(userId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
 
@@ -63,6 +75,25 @@ const getUserInfo = async (req, res, next) => {
     if (!userInfo) return res.status(404).json({ error: 'Not Found' });
 
     res.userInfo = userInfo;
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// :id값에 따른 document 중 _id값이 :id와 동일한 document 설정 및 조회
+const getPlace = async (req, res, next) => {
+  const { placeId } = req.body;
+
+  if (!placeId) return res.status(400).json({ error: 'Bad Request' });
+  if (!mongoose.Types.ObjectId.isValid(placeId))
+    return res.status(415).json({ error: 'Unsupported Media Type' });
+
+  try {
+    const place = await Place.findById(placeId);
+    if (!place) return res.status(404).json({ error: 'Not Found' });
+
+    res.place = place;
     next();
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -127,6 +158,14 @@ router.get('/', async (req, res) => {
  *         schema:
  *           items:
  *             $ref: '#/definitions/Bookmark'
+ *       400:
+ *         description: Bad Request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Bad Request"
  *       401:
  *         description: Unauthorized
  *         schema:
@@ -179,10 +218,10 @@ router.get('/private', verifyToken, getUserInfo, async (req, res) => {
  *   post:
  *     tags:
  *       - Bookmarks Collection 기반 API
- *     summary: 신규 북마크 리스트 등록
+ *     summary: 신규 즐겨찾기 리스트 등록
  *     security:
  *       - JWT: []
- *     description: 새로운 북마크 리스트를 추가합니다.
+ *     description: 새로운 즐겨찾기 리스트를 추가합니다.
  *     parameters:
  *       - in: body
  *         name: bookmarksRequest
@@ -274,10 +313,10 @@ router.post('/private', verifyToken, getUserInfo, async (req, res) => {
  *   patch:
  *    tags:
  *      - Bookmarks Collection 기반 API
- *    summary: 북마크 리스트 정보 수정
+ *    summary: 즐겨찾기 리스트 정보 수정
  *    security:
  *      - JWT: []
- *    description: 북마크 리스트 정보를 수정합니다.
+ *    description: 즐겨찾기 리스트 정보를 수정합니다.
  *    parameters:
  *      - in: path
  *        name: bookmarkId
@@ -285,7 +324,7 @@ router.post('/private', verifyToken, getUserInfo, async (req, res) => {
  *        description: bookmarkId
  *        type: string
  *      - in: body
- *        name: passwordRequest
+ *        name: bookmarkRequest
  *        required: true
  *        schema:
  *          type: object
@@ -344,7 +383,7 @@ router.post('/private', verifyToken, getUserInfo, async (req, res) => {
  *              type: string
  *              example: "Internal Server Error"
  */
-router.patch('/private/:id', verifyToken, getBookmark, async (req, res) => {
+router.post('/private/:id', verifyToken, getBookmark, async (req, res) => {
   const { bookmarkName, iconColor } = req.body;
 
   if (!bookmarkName || !iconColor)
@@ -366,14 +405,121 @@ router.patch('/private/:id', verifyToken, getBookmark, async (req, res) => {
 
 /**
  * @swagger
+ * /api/bookmarks/private/bookmarkedPlace/{bookmarkId}:
+ *   post:
+ *    tags:
+ *      - Bookmarks Collection 기반 API
+ *    summary: 즐겨찾기 리스트 내 장소 등록
+ *    security:
+ *      - JWT: []
+ *    description: 즐겨찾기 리스트 내에 사용자가 선택한 장소를 즐겨찾기로 등록합니다.
+ *    parameters:
+ *      - in: path
+ *        name: bookmarkId
+ *        required: true
+ *        description: bookmarkId
+ *        type: string
+ *      - in: body
+ *        name: bookmarkRequest
+ *        required: true
+ *        schema:
+ *          type: object
+ *          properties:
+ *            placeId:
+ *              type: string
+ *    responses:
+ *      200:
+ *        description: OK
+ *        schema:
+ *          type: object
+ *          properties:
+ *            message:
+ *              type: string
+ *              example: "OK"
+ *      400:
+ *        description: Bad request
+ *        schema:
+ *          type: object
+ *          properties:
+ *            errror:
+ *              type: string
+ *              example: "Bad Request"
+ *      401:
+ *        description: Unauthorized
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Unauthorized"
+ *      404:
+ *        description: Not Found
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Not Found"
+ *      409:
+ *        description: Conflict
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "BookmarkedPlaceId with this placeId already exists"
+ *      415:
+ *        description: Unsupported Media Type
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Unsupported Media Type"
+ *      500:
+ *        description: Internal Server Error
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Internal Server Error"
+ */
+router.post(
+  '/private/bookmarkedPlace/:id',
+  verifyToken,
+  getBookmark,
+  getPlace,
+  async (req, res) => {
+    const bookmark = res.bookmark;
+    const place = res.place;
+
+    try {
+      if (!bookmark.bookmarkedPlaceId.includes(place._id)) {
+        bookmark.bookmarkedPlaceId.push(place._id);
+        await bookmark.save();
+        return res.status(200).json({ message: 'OK' });
+      }
+
+      return res.status(409).json({
+        message: 'BookmarkedPlaceId with this placeId already exists',
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+/**
+ * @swagger
  * /api/bookmarks/private/{bookmarkId}:
  *   delete:
  *     tags:
  *       - Bookmarks Collection 기반 API
- *     summary: 특정 북마크 리스트 제거
+ *     summary: 특정 즐겨찾기 리스트 제거
  *     security:
  *       - JWT: []
- *     description: 특정 북마크 리스트 정보를 담고 있는 document를 제거합니다.
+ *     description: 특정 즐겨찾기 리스트 정보를 담고 있는 document를 제거합니다.
  *     parameters:
  *       - in: path
  *         name: bookmarkId
@@ -389,6 +535,14 @@ router.patch('/private/:id', verifyToken, getBookmark, async (req, res) => {
  *             message:
  *               type: string
  *               example: "OK"
+ *       400:
+ *         description: Bad Request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Bad Request"
  *       401:
  *         description: Unauthorized
  *         schema:
@@ -430,5 +584,110 @@ router.delete('/private/:id', verifyToken, getBookmark, async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+/**
+ * @swagger
+ * /api/bookmarks/private/bookmarkedPlace/{bookmarkId}:
+ *   delete:
+ *    tags:
+ *      - Bookmarks Collection 기반 API
+ *    summary: 즐겨찾기 리스트 내 특정 장소 제거
+ *    security:
+ *      - JWT: []
+ *    description: 즐겨찾기 리스트 내에 사용자가 선택한 장소를 즐겨찾기에서 제거합니다.
+ *    parameters:
+ *      - in: path
+ *        name: bookmarkId
+ *        required: true
+ *        description: bookmarkId
+ *        type: string
+ *      - in: body
+ *        name: bookmarkRequest
+ *        required: true
+ *        schema:
+ *          type: object
+ *          properties:
+ *            placeId:
+ *              type: string
+ *    responses:
+ *      200:
+ *        description: OK
+ *        schema:
+ *          type: object
+ *          properties:
+ *            message:
+ *              type: string
+ *              example: "OK"
+ *      400:
+ *        description: Bad request
+ *        schema:
+ *          type: object
+ *          properties:
+ *            errror:
+ *              type: string
+ *              example: "Bad Request"
+ *      401:
+ *        description: Unauthorized
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Unauthorized"
+ *      404:
+ *        description: Not Found
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Not Found"
+ *      409:
+ *        description: Conflict
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "BookmarkedPlaceId with this placeId already exists"
+ *      415:
+ *        description: Unsupported Media Type
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Unsupported Media Type"
+ *      500:
+ *        description: Internal Server Error
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Internal Server Error"
+ */
+router.delete(
+  '/private/bookmarkedPlace/:id',
+  verifyToken,
+  getBookmark,
+  getPlace,
+  async (req, res) => {
+    const bookmark = res.bookmark;
+    const place = res.place;
+
+    try {
+      if (!bookmark.bookmarkedPlaceId.includes(place._id))
+        return res.status(404).json({ err: 'Not Found' });
+
+      await Bookmark.findByIdAndUpdate(bookmark._id, {
+        $pull: { bookmarkedPlaceId: place._id },
+      });
+      return res.status(200).json({ message: 'OK' });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
 
 module.exports = router;
