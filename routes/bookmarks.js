@@ -100,7 +100,7 @@ const getPlace = async (req, res, next) => {
   }
 };
 
-// Reqeust Query에 담긴 placeId(s)를 통해 해당 장소의 정보가 담긴 배열을 반환
+// :id값에 따른 document 중 bookarmkId값이 :id와 동일한 document 설정 및 조회
 const getPlacesInformations = async (req, res, next) => {
   const bookmarkId = req.params.id;
 
