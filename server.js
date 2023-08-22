@@ -6,6 +6,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const winston = require('winston');
 const morgan = require('morgan');
 const port = 5050;
 
@@ -30,17 +31,38 @@ const swaggerOptions = {
   apis: ['./routes/*.js'], // files containing annotations as above
 };
 
+// HTTP Logger options
+const httpLogger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'http.log' }),
+    new winston.transports.Console({ format: winston.format.simple() }),
+  ],
+});
+
+// Morgan options
+const morganOptions = {
+  stream: {
+    write: (message) => {
+      // 로그를 'info' 레벨로 사용하며, 끝에 있는 개행 문자를 제거
+      httpLogger.info(message.trim());
+    },
+  },
+};
+
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
   .then(() => console.log('MongoDB Connected'))
-  .catch((err) => console.log(err));
+  .catch((err) => console.error(err));
 
 app.use(express.json());
 
-app.use(morgan('combined'));
+app.use(morgan('combined', morganOptions));
 
 // 정적 파일 서비스를 위한 middleware 설정
 app.use(express.static(path.join(__dirname, 'public')));
