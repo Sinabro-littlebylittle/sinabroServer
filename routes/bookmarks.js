@@ -100,6 +100,33 @@ const getPlace = async (req, res, next) => {
   }
 };
 
+// Reqeust Query에 담긴 placeId(s)를 통해 해당 장소의 정보가 담긴 배열을 반환
+const getPlacesInformations = async (req, res, next) => {
+  const bookmarkId = req.params.id;
+
+  if (!bookmarkId) return res.status(400).json({ error: 'Bad Request' });
+  if (!mongoose.Types.ObjectId.isValid(bookmarkId))
+    return res.status(415).json({ error: 'Unsupported Media Type' });
+
+  try {
+    const bookmark = await Bookmark.findById(bookmarkId);
+    if (!bookmark) return res.status(404).json({ error: 'Not Found' });
+
+    const placeIds = bookmark.bookmarkedPlaceId;
+
+    const placeInformations = await Place.find({
+      _id: {
+        $in: placeIds,
+      },
+    });
+
+    res.placeInformations = placeInformations;
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
 /**
  * @swagger
  * /api/bookmarks:
@@ -148,7 +175,7 @@ router.get('/', async (req, res) => {
  *   get:
  *     tags:
  *       - Bookmarks Collection 기반 API
- *     summary: 특정 회원의 즐겨찾기 리스트 정보 목록 반환
+ *     summary: 회원의 즐겨찾기 리스트 정보 목록 반환
  *     security:
  *       - JWT: []
  *     description: (bookmarks) collection 내에서 사용자가 등록한 즐겨찾기 리스트 정보 목록을 반환합니다.
@@ -211,6 +238,84 @@ router.get('/private', verifyToken, getUserInfo, async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 });
+
+/**
+ * @swagger
+ * /api/bookmarks/private/bookmarkedPlace/{bookmarkId}:
+ *   get:
+ *     tags:
+ *       - Bookmarks Collection 기반 API
+ *     summary: 회원의 즐겨찾기 리스트 내 즐겨찾기된 장소 정보 반환
+ *     security:
+ *       - JWT: []
+ *     description: 사용자가 등록한 즐겨찾기 리스트 내 즐겨찾기된 장소 정보 목록을 반환합니다.
+ *     parameters:
+ *       - in: path
+ *         name: bookmarkId
+ *         required: true
+ *         description: bookmarkId
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: OK
+ *         schema:
+ *           items:
+ *             $ref: '#/definitions/Place'
+ *       400:
+ *         description: Bad Request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Bad Request"
+ *       401:
+ *         description: Unauthorized
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Unauthorized"
+ *       404:
+ *         description: Not Found
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Not Found"
+ *       415:
+ *         description: Unsupported Media Type
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Unsupported Media Type"
+ *       500:
+ *         description: Internal Server Error
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Internal Server Error"
+ */
+router.get(
+  '/private/bookmarkedPlace/:id',
+  getBookmark,
+  getPlacesInformations,
+  async (req, res) => {
+    const placeInformations = res.placeInformations;
+
+    try {
+      return res.status(200).json(placeInformations);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
 
 /**
  * @swagger
