@@ -116,6 +116,31 @@ const addUpdateElapsedTimeProp = (currPlaceInformations) => {
   return updatedPlaceInformations;
 };
 
+// markerId._id 별로 가장 근래의 createdTime을 가진 항목만 선택
+const filterAndSortByCreatedTime = (currPlaceInformations) => {
+  const markerIdGroups = {};
+  for (const info of currPlaceInformations) {
+    const markerIdStr = info.placeId.markerId._id.toString();
+    if (
+      !markerIdGroups[markerIdStr] ||
+      new Date(info.createdTime) >
+        new Date(markerIdGroups[markerIdStr].createdTime)
+    ) {
+      markerIdGroups[markerIdStr] = info;
+    }
+  }
+
+  // Object values로 최종 배열 생성
+  currPlaceInformations = Object.values(markerIdGroups);
+
+  // 가장 최신으로 등록된 인원수 데이터의 일자가 배열의 앞으로 오도록 정렬
+  currPlaceInformations.sort(
+    (a, b) => new Date(b.createdTime) - new Date(a.createdTime)
+  );
+
+  return currPlaceInformations;
+};
+
 /**
  * @swagger
  * /api/headcounts:
@@ -237,8 +262,9 @@ router.get('/public/placeInformations', async (req, res) => {
       return res.status(404).json({ error: 'Not Found' });
     }
 
-    const updatedPlaceInformations =
-      addUpdateElapsedTimeProp(placeInformations);
+    const updatedPlaceInformations = filterAndSortByCreatedTime(
+      addUpdateElapsedTimeProp(placeInformations)
+    );
 
     return res.status(200).json(updatedPlaceInformations);
   } catch (err) {
