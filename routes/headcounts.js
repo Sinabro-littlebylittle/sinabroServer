@@ -106,7 +106,7 @@ const addUpdateElapsedTimeProp = (currPlaceInformations) => {
     const latestInfo = group[0];
     const elapsedTime =
       group.length > 1
-        ? Math.floor((currentTime - new Date(group[1].createdTime)) / 1000)
+        ? Math.floor((currentTime - new Date(latestInfo.createdTime)) / 1000)
         : -1;
 
     let updatedInfo = latestInfo.toObject();
