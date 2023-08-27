@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Headcount = require('../models/headcount');
 const Place = require('../models/place');
+const Marker = require('../models/marker');
 const { getFormattedDate } = require('../utils/dateUtils');
 const { verifyToken } = require('./middlewares/authorization');
 const router = express.Router();
@@ -16,6 +17,7 @@ const router = express.Router();
  *       - placeId
  *       - headcount
  *       - createdTime
+ *       - userId
  *     properties:
  *       _id:
  *         type: string
@@ -24,7 +26,7 @@ const router = express.Router();
  *       placeId:
  *         type: string
  *         format: ObjectId
- *         description: headcountId 연관된 placeId
+ *         description: headcountId와 연관된 placeId
  *       headcount:
  *         type: number
  *         description: 인원수
@@ -32,24 +34,28 @@ const router = express.Router();
  *         type: string
  *         example: "2023-07-29 20:44:51.681"
  *         description: 인원수 정보가 추가된 일자 및 시각
+ *       userId:
+ *         type: string
+ *         format: ObjectId
+ *         description: headcountId와 연관된 userId
  *       __v:
  *         type: number
  *         description: version key
  */
 
-// :id값에 따른 document 중 placeId값이 :id와 동일한 document(s) 설정 및 조회
-const getPlaceInformations = async (req, res, next) => {
-  const placeId = req.params.id;
+// :id값에 따른 document 중 markerId값이 :id와 동일한 document(s) 설정 및 조회
+const getMarker = async (req, res, next) => {
+  const markerId = req.params.id;
 
-  if (!placeId) return res.status(400).json({ error: 'Bad Request' });
-  if (!mongoose.Types.ObjectId.isValid(placeId))
+  if (!markerId) return res.status(400).json({ error: 'Bad Request' });
+  if (!mongoose.Types.ObjectId.isValid(markerId))
     return res.status(415).json({ error: 'Unsupported Media Type' });
 
   try {
-    const placeInformations = await Headcount.find({ placeId });
-    if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
+    const marker = await Marker.findById(markerId);
+    if (!marker) return res.status(404).json({ error: 'Not Found' });
 
-    res.placeInformations = placeInformations;
+    res.marker = marker;
     next();
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -274,79 +280,6 @@ router.get('/public/placeInformations', async (req, res) => {
 
 /**
  * @swagger
- * /api/headcounts/{placeId}:
- *   get:
- *     tags:
- *       - Headcounts Collection 기반 API
- *     summary: 특정 장소에 대한 인원수 세부 정보 반환 ➜ [In-App use ❌]
- *     description: 특정 장소에 대한 인원수 세부 정보를 반환합니다.
- *     parameters:
- *       - in: path
- *         name: placeId
- *         required: true
- *         description: placeId
- *         type: string
- *     responses:
- *       200:
- *         description: Successful operation
- *         schema:
- *           type: object
- *           properties:
- *             _id:
- *               type: string
- *             placeId:
- *               type: string
- *             headcount:
- *               type: number
- *             createdTime:
- *               type: string
- *               example: "2023-07-29 20:44:51.681"
- *             __v:
- *               type: number
- *             updateElapsedTime:
- *               type: number
- *       400:
- *         description: Bad Request
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Bad Request"
- *       404:
- *         description: Not Found
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Not Found"
- *       415:
- *         description: Unsupported Media Type
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Unsupported Media Type"
- *       500:
- *         description: Internal Server Error
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Internal Server Error"
- */
-router.get('/:id', getPlaceInformations, async (req, res) => {
-  const updatedPlaceInformations = addUpdateElapsedTimeProp(
-    res.placeInformations
-  );
-  return res.status(200).json(updatedPlaceInformations[0]);
-});
-
-/**
- * @swagger
  * /api/headcounts/public/{markerId}/placeInformations:
  *   get:
  *     tags:
@@ -435,33 +368,28 @@ router.get('/:id', getPlaceInformations, async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.get(
-  '/public/:id/placeInformations',
-  getPlaceInformations,
-  async (req, res) => {
-    try {
-      const placeId = req.params.id;
-      const placeInformations = await Headcount.find()
-        .populate({
-          path: 'placeId',
-          populate: { path: 'markerId' },
-        })
-        .exec();
-      if (!placeInformations) {
-        return res.status(404).json({ error: 'Not Found' });
-      }
-      const filteredPlaceInformations = placeInformations.filter(
-        (info) => info.placeId.markerId._id.toString() === placeId
-      );
-      const updatedPlaceInformations = addUpdateElapsedTimeProp(
-        filteredPlaceInformations
-      );
-      return res.status(200).json(updatedPlaceInformations);
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
-    }
+router.get('/public/:id/placeInformations', getMarker, async (req, res) => {
+  try {
+    const markerId = req.params.id;
+    const placeInformations = await Headcount.find()
+      .populate({
+        path: 'placeId',
+        populate: { path: 'markerId' },
+      })
+      .exec();
+    if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
+
+    const filteredPlaceInformations = placeInformations.filter(
+      (placeInfo) => placeInfo.placeId.markerId._id.toString() === markerId
+    );
+    const updatedPlaceInformations = addUpdateElapsedTimeProp(
+      filteredPlaceInformations
+    );
+    return res.status(200).json(updatedPlaceInformations);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
-);
+});
 
 /**
  * @swagger
@@ -504,6 +432,8 @@ router.get(
  *             createdTime:
  *               type: string
  *               example: "2023-07-29 20:44:51.681"
+ *             userId:
+ *               type: string
  *             __v:
  *               type: number
  *       400:
@@ -549,6 +479,7 @@ router.post('/private/:id', verifyToken, getPlace, async (req, res) => {
   const headcount = new Headcount(req.body);
   headcount.placeId = req.params.id;
   headcount.createdTime = getFormattedDate();
+  headcount.userId = res.locals.sub;
 
   try {
     const newHeadcount = await headcount.save();
