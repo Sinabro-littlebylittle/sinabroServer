@@ -62,30 +62,11 @@ const getBookmark = async (req, res, next) => {
   }
 };
 
-// :id값에 따른 document 중 userId값이 :id와 동일한 document 설정 및 조회
-const getUserInfo = async (req, res, next) => {
-  let userId = req.params.id;
-  if (!userId) userId = res.locals.sub;
-
-  if (!userId) return res.status(400).json({ error: 'Bad Request' });
-  if (!mongoose.Types.ObjectId.isValid(userId))
-    return res.status(415).json({ error: 'Unsupported Media Type' });
-
-  try {
-    const userInfo = await UserInfo.findById(userId).select('-password -__v');
-    if (!userInfo) return res.status(404).json({ error: 'Not Found' });
-
-    res.userInfo = userInfo;
-    next();
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-};
-
 // :id값에 따른 document 중 _id값이 :id와 동일한 document 설정 및 조회
 const getPlace = async (req, res, next) => {
   let { placeId } = req.body;
   if (!placeId) placeId = req.query.placeId;
+  if (!placeId) placeId = req.params.id;
 
   if (!placeId) return res.status(400).json({ error: 'Bad Request' });
   if (!mongoose.Types.ObjectId.isValid(placeId))
@@ -258,11 +239,11 @@ router.get('/', async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.get('/private', verifyToken, getUserInfo, async (req, res) => {
-  const userInfo = res.userInfo;
+router.get('/private', verifyToken, async (req, res) => {
+  const userId = res.locals.sub;
 
   try {
-    const bookmarks = await Bookmark.find({ userId: userInfo._id });
+    const bookmarks = await Bookmark.find({ userId });
     if (!bookmarks) return res.status(400).json({ error: 'Not Found' });
 
     return res.status(200).json(bookmarks);
@@ -386,6 +367,94 @@ router.get('/private/bookmarkedPlace/:id', getBookmark, async (req, res) => {
 
 /**
  * @swagger
+ * /api/bookmarks/private/bookmarkedPlace/places/{placeId}:
+ *   get:
+ *     tags:
+ *       - Bookmarks Collection 기반 API
+ *     summary: 특정 장소의 즐겨찾기 여부 확인
+ *     security:
+ *       - JWT: []
+ *     description: 특정 장소에 대하여 현재 사용자의 즐겨찾기 리스트에 해당 장소가 추가되어 있는지의 여부를 확인합니다.
+ *     parameters:
+ *       - in: path
+ *         name: placeId
+ *         required: true
+ *         description: placeId
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: OK
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "OK"
+ *       400:
+ *         description: Bad Request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Bad Request"
+ *       401:
+ *         description: Unauthorized
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Unauthorized"
+ *       404:
+ *         description: Not Found
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Not Found"
+ *       415:
+ *         description: Unsupported Media Type
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Unsupported Media Type"
+ *       500:
+ *         description: Internal Server Error
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Internal Server Error"
+ */
+router.get(
+  '/private/bookmarkedPlace/places/:id',
+  verifyToken,
+  getPlace,
+  async (req, res) => {
+    const userId = res.locals.sub;
+    const place = res.place;
+
+    try {
+      const bookmark = await Bookmark.findOne({ userId });
+
+      if (!bookmark) return res.status(404).json({ error: 'Not Found' });
+
+      if (bookmark.bookmarkedPlaceId.includes(place._id))
+        return res.status(200).json({ message: 'OK' });
+      else return res.status(404).json({ error: 'Not Found' });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+/**
+ * @swagger
  * /api/bookmarks/private:
  *   post:
  *     tags:
@@ -461,17 +530,17 @@ router.get('/private/bookmarkedPlace/:id', getBookmark, async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.post('/private', verifyToken, getUserInfo, async (req, res) => {
+router.post('/private', verifyToken, async (req, res) => {
   const { bookmarkName, iconColor } = req.body;
 
   if (!bookmarkName || !iconColor || typeof req.body.iconColor !== 'number')
     return res.status(400).json({ error: 'Bad Request' });
 
-  const userInfo = res.userInfo;
+  const userId = res.locals.sub;
 
   try {
     const bookmark = new Bookmark(req.body);
-    bookmark.userId = userInfo._id;
+    bookmark.userId = userId;
     const newBookmark = await bookmark.save();
     return res.status(201).json(newBookmark);
   } catch (err) {
