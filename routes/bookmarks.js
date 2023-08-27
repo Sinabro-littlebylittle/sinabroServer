@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Bookmark = require('../models/bookmark');
 const UserInfo = require('../models/user_info');
 const Place = require('../models/place');
+const Headcount = require('../models/headcount');
 const { verifyToken } = require('./middlewares/authorization');
 const router = express.Router();
 
@@ -83,7 +84,8 @@ const getUserInfo = async (req, res, next) => {
 
 // :id값에 따른 document 중 _id값이 :id와 동일한 document 설정 및 조회
 const getPlace = async (req, res, next) => {
-  const { placeId } = req.body;
+  let { placeId } = req.body;
+  if (!placeId) placeId = req.query.placeId;
 
   if (!placeId) return res.status(400).json({ error: 'Bad Request' });
   if (!mongoose.Types.ObjectId.isValid(placeId))
@@ -94,33 +96,6 @@ const getPlace = async (req, res, next) => {
     if (!place) return res.status(404).json({ error: 'Not Found' });
 
     res.place = place;
-    next();
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-// :id값에 따른 document 중 bookarmkId값이 :id와 동일한 document 설정 및 조회
-const getPlacesInformations = async (req, res, next) => {
-  const bookmarkId = req.params.id;
-
-  if (!bookmarkId) return res.status(400).json({ error: 'Bad Request' });
-  if (!mongoose.Types.ObjectId.isValid(bookmarkId))
-    return res.status(415).json({ error: 'Unsupported Media Type' });
-
-  try {
-    const bookmark = await Bookmark.findById(bookmarkId);
-    if (!bookmark) return res.status(404).json({ error: 'Not Found' });
-
-    const placeIds = bookmark.bookmarkedPlaceId;
-
-    const placeInformations = await Place.find({
-      _id: {
-        $in: placeIds,
-      },
-    });
-
-    res.placeInformations = placeInformations;
     next();
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -141,6 +116,47 @@ const verifyBookmarkIds = (req, res, next) => {
 
   res.bookmarkIds = bookmarkIds;
   next();
+};
+
+// 인자로 들어온 배열의 각 요소인 Object에 updateElapsedTime 속성을 기준에 맞게 추가함
+const addUpdateElapsedTimeProp = (currPlaceInformations) => {
+  // PlaceId 별로 데이터를 그룹화
+  const placeIdGroups = {};
+  for (const info of currPlaceInformations) {
+    const placeIdStr = info.placeId._id.toString();
+    if (!placeIdGroups[placeIdStr]) {
+      placeIdGroups[placeIdStr] = [];
+    }
+    placeIdGroups[placeIdStr].push(info);
+  }
+
+  // 현재 일자를 가져옴
+  const currentTime = new Date();
+
+  // 각 그룹에 대해 가장 최신의 데이터 선택하고 updateElapsedTime 계산
+  let updatedPlaceInformations = [];
+  for (const placeIdStr in placeIdGroups) {
+    const group = placeIdGroups[placeIdStr];
+    group.sort((a, b) => new Date(b.createdTime) - new Date(a.createdTime)); // 가장 최신 데이터가 앞으로 오게 정렬
+
+    // 최신 데이터만 선택
+    const latestInfo = group[0];
+    const elapsedTime =
+      group.length > 1
+        ? Math.floor((currentTime - new Date(group[1].createdTime)) / 1000)
+        : -1;
+
+    let updatedInfo = latestInfo.toObject();
+    updatedInfo.updateElapsedTime = elapsedTime;
+    updatedPlaceInformations.push(updatedInfo);
+  }
+
+  // 가장 최신으로 등록된 인원수 데이터의 일자가 배열의 앞으로 오도록 정렬
+  updatedPlaceInformations.sort(
+    (a, b) => new Date(b.createdTime) - new Date(a.createdTime)
+  );
+
+  return updatedPlaceInformations;
 };
 
 /**
@@ -318,20 +334,55 @@ router.get('/private', verifyToken, getUserInfo, async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.get(
-  '/private/bookmarkedPlace/:id',
-  getBookmark,
-  getPlacesInformations,
-  async (req, res) => {
-    const placeInformations = res.placeInformations;
+router.get('/private/bookmarkedPlace/:id', getBookmark, async (req, res) => {
+  try {
+    const bookmark = res.bookmark;
 
-    try {
-      return res.status(200).json(placeInformations);
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
+    // Check each ObjectId in bookmarkedPlaceId
+    for (const placeId of bookmark.bookmarkedPlaceId) {
+      const placeExists = await Place.findById(placeId);
+      if (!placeExists) {
+        // If the place doesn't exist in the places collection, remove its ObjectId from the bookmarkedPlaceId array
+        await Bookmark.findByIdAndUpdate(bookmark._id, {
+          $pull: { bookmarkedPlaceId: placeId },
+        });
+      }
     }
+
+    // Reload the updated bookmark
+    const updatedBookmark = await Bookmark.findById(bookmark._id);
+
+    const placeInformations = await Headcount.find()
+      .populate({
+        path: 'placeId',
+        populate: { path: 'markerId' },
+      })
+      .exec();
+    if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
+
+    const filteredPlaceInformations = placeInformations.filter((placeInfo) =>
+      bookmark.bookmarkedPlaceId.includes(placeInfo.placeId._id.toString())
+    );
+
+    const updatedPlaceInformations = addUpdateElapsedTimeProp(
+      filteredPlaceInformations
+    );
+
+    // for (const placeInfo of updatedPlaceInformations) {
+    //   const placeExists = await Place.findById(placeInfo.placeId._id);
+    //   if (!placeExists) {
+    //     // Remove the placeId._id from the bookmarkedPlaceId array in bookmarks collection
+    //     await Bookmark.findByIdAndUpdate(bookmark._id, {
+    //       $pull: { bookmarkedPlaceId: placeInfo.placeId._id },
+    //     });
+    //   }
+    // }
+
+    return res.status(200).json(updatedPlaceInformations);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
-);
+});
 
 /**
  * @swagger
@@ -740,14 +791,11 @@ router.delete('/private', verifyToken, verifyBookmarkIds, async (req, res) => {
  *        required: true
  *        description: bookmarkId
  *        type: string
- *      - in: body
- *        name: bookmarkRequest
+ *      - in: query
+ *        name: placeId
  *        required: true
- *        schema:
- *          type: object
- *          properties:
- *            placeId:
- *              type: string
+ *        description: placeId
+ *        type: string
  *    responses:
  *      200:
  *        description: OK
