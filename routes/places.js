@@ -62,48 +62,6 @@ const getPlace = async (req, res, next) => {
 
 /**
  * @swagger
- * /api/places:
- *   get:
- *     tags:
- *       - Places Collection 기반 API
- *     summary: (places) Collection 내의 모든 Document(s) 반환 ➜ [In-App use ❌]
- *     description: (places) collection 내의 모든 데이터 목록을 반환합니다.
- *     responses:
- *       200:
- *         description: OK
- *         schema:
- *           items:
- *             $ref: '#/definitions/Place'
- *       404:
- *         description: Not Found
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Not Found"
- *       500:
- *         description: Internal Server Error
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Internal Server Error"
- */
-router.get('/', async (req, res) => {
-  try {
-    const places = await Place.find();
-    if (!places) return res.status(404).json({ error: 'Not Found' });
-
-    return res.status(200).json(places);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-/**
- * @swagger
  * /api/places/private:
  *   post:
  *     tags:

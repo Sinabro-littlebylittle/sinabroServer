@@ -149,48 +149,6 @@ const filterAndSortByCreatedTime = (currPlaceInformations) => {
 
 /**
  * @swagger
- * /api/headcounts:
- *   get:
- *     tags:
- *       - Headcounts Collection 기반 API
- *     summary: (headcounts) Collection 내의 모든 Document(s) 반환 ➜ [In-App use ❌]
- *     description: (headcounts) collection 내의 모든 데이터 목록을 반환합니다.
- *     responses:
- *       200:
- *         description: OK
- *         schema:
- *           items:
- *             $ref: '#/definitions/Headcount'
- *       404:
- *         description: Not Found
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Not Found"
- *       500:
- *         description: Internal Server Error
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Internal Server Error"
- */
-router.get('/', async (req, res) => {
-  try {
-    const placeInformations = await Headcount.find();
-    if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
-
-    return res.status(200).json(placeInformations);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-/**
- * @swagger
  * /api/headcounts/public/placeInformations:
  *   get:
  *     tags:
