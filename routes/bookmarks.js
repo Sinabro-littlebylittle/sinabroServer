@@ -142,48 +142,6 @@ const addUpdateElapsedTimeProp = (currPlaceInformations) => {
 
 /**
  * @swagger
- * /api/bookmarks:
- *   get:
- *     tags:
- *       - Bookmarks Collection 기반 API
- *     summary: (bookmarks) Collection 내의 모든 Document(s) 반환 ➜ [In-App use ❌]
- *     description: (bookmarks) collection 내의 모든 데이터 목록을 반환합니다.
- *     responses:
- *       200:
- *         description: OK
- *         schema:
- *           items:
- *             $ref: '#/definitions/Bookmark'
- *       404:
- *         description: Not Found
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Not Found"
- *       500:
- *         description: Internal Server Error
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Internal Server Error"
- */
-router.get('/', async (req, res) => {
-  try {
-    const bookmarks = await Bookmark.find();
-    if (!bookmarks) return res.status(400).json({ error: 'Not Found' });
-
-    return res.status(200).json(bookmarks);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-/**
- * @swagger
  * /api/bookmarks/private:
  *   get:
  *     tags:
