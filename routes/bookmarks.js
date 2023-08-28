@@ -508,28 +508,28 @@ router.post('/private', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /api/bookmarks/private/bookmarkedPlace/{bookmarkId}:
+ * /api/bookmarks/private/bookmarkedPlace/places/{placeId}:
  *   post:
  *    tags:
  *      - Bookmarks Collection 기반 API
- *    summary: 즐겨찾기 리스트 내 장소 등록
+ *    summary: 여러 즐겨찾기 리스트 내 장소 일괄 등록
  *    security:
  *      - JWT: []
- *    description: 즐겨찾기 리스트 내에 사용자가 선택한 장소를 즐겨찾기로 등록합니다.
+ *    description: 선택된 다수의 즐겨찾기 리스트 내에 사용자가 선택한 장소를 즐겨찾기로 일괄 등록합니다.
  *    parameters:
  *      - in: path
- *        name: bookmarkId
+ *        name: placeId
  *        required: true
- *        description: bookmarkId
+ *        description: placeId
  *        type: string
  *      - in: body
- *        name: bookmarkRequest
+ *        name: bookmarkIds
+ *        description: List of bookmark IDs to add
  *        required: true
  *        schema:
- *          type: object
- *          properties:
- *            placeId:
- *              type: string
+ *          type: array
+ *          items:
+ *            type: string
  *    responses:
  *      200:
  *        description: OK
@@ -589,24 +589,39 @@ router.post('/private', verifyToken, async (req, res) => {
  *              example: "Internal Server Error"
  */
 router.post(
-  '/private/bookmarkedPlace/:id',
+  '/private/bookmarkedPlace/places/:id',
   verifyToken,
-  getBookmark,
+  verifyBookmarkIds,
   getPlace,
   async (req, res) => {
-    const bookmark = res.bookmark;
+    const bookmarkIds = res.bookmarkIds;
     const place = res.place;
 
     try {
-      if (!bookmark.bookmarkedPlaceId.includes(place._id)) {
-        bookmark.bookmarkedPlaceId.push(place._id);
-        await bookmark.save();
-        return res.status(200).json({ message: 'OK' });
+      // bookmarks collection 내에서 bookmarkIds에 있는 ObjectId와 일치하는 document들을 찾음
+      const result = await Bookmark.find({
+        _id: { $in: bookmarkIds },
+      });
+
+      // 위에서 찾은 bookmarks들 중에서 bookmarkedPlaceId에 placeId가 이미 존재하는 경우 체크
+      const alreadyBookmarked = result.some((bookmark) =>
+        bookmark.bookmarkedPlaceId.includes(place._id)
+      );
+
+      if (alreadyBookmarked) {
+        return res.status(409).json({
+          message: 'BookmarkedPlaceId with this placeId already exists',
+          error: 'Conflict',
+        });
       }
 
-      return res.status(409).json({
-        message: 'BookmarkedPlaceId with this placeId already exists',
-      });
+      // result에서 찾은 bookmarks들의 bookmarkedPlaceId에 placeId를 추가
+      await Bookmark.updateMany(
+        { _id: { $in: bookmarkIds } },
+        { $push: { bookmarkedPlaceId: place._id } }
+      );
+
+      return res.status(200).json({ message: 'OK' });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -721,7 +736,7 @@ router.patch('/private/:id', verifyToken, getBookmark, async (req, res) => {
  *     description: 특정 즐겨찾기 리스트 정보를 담고 있는 document(s)를 제거합니다.
  *     parameters:
  *       - in: body
- *         name: body
+ *         name: bookmarksIds
  *         description: List of bookmark IDs to delete
  *         required: true
  *         schema:
