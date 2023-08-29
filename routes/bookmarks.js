@@ -202,7 +202,7 @@ router.get('/private', verifyToken, async (req, res) => {
 
   try {
     const bookmarks = await Bookmark.find({ userId });
-    if (!bookmarks) return res.status(400).json({ error: 'Not Found' });
+    // if (!bookmarks) return res.status(404).json({ error: 'Not Found' });
 
     return res.status(200).json(bookmarks);
   } catch (err) {
@@ -329,10 +329,10 @@ router.get('/private/bookmarkedPlace/:id', getBookmark, async (req, res) => {
  *   get:
  *     tags:
  *       - Bookmarks Collection 기반 API
- *     summary: 특정 장소의 즐겨찾기 여부 확인
+ *     summary: 특정 장소가 즐겨찾기된 즐겨찾기 리스트 목록 정보 반환
  *     security:
  *       - JWT: []
- *     description: 특정 장소에 대하여 현재 사용자의 즐겨찾기 리스트에 해당 장소가 추가되어 있는지의 여부를 확인합니다.
+ *     description: 특정 장소에 대하여 현재 사용자의 즐겨찾기 리스트 중에서 해당 장소가 추가되어 있는 즐겨찾기 리스트 목록 정보를 반환합니다.
  *     parameters:
  *       - in: path
  *         name: placeId
@@ -343,11 +343,8 @@ router.get('/private/bookmarkedPlace/:id', getBookmark, async (req, res) => {
  *       200:
  *         description: OK
  *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "OK"
+ *           items:
+ *             $ref: '#/definitions/Bookmark'
  *       400:
  *         description: Bad Request
  *         schema:
@@ -398,13 +395,15 @@ router.get(
     const place = res.place;
 
     try {
-      const bookmark = await Bookmark.findOne({ userId });
+      const bookmarks = await Bookmark.find({
+        userId,
+        bookmarkedPlaceId: place._id,
+      });
 
-      if (!bookmark) return res.status(404).json({ error: 'Not Found' });
+      // if (!bookmarks) return res.status(404).json({ error: 'Not Found' });
 
-      if (bookmark.bookmarkedPlaceId.includes(place._id))
-        return res.status(200).json({ message: 'OK' });
-      else return res.status(404).json({ error: 'Not Found' });
+      // 조건을 만족하는 모든 bookmarks를 반환한다.
+      return res.status(200).json(bookmarks);
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
