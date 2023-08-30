@@ -74,6 +74,7 @@ const getPlace = async (req, res, next) => {
 
   try {
     const place = await Place.findById(placeId);
+
     if (!place) return res.status(404).json({ error: 'Not Found' });
 
     res.place = place;
@@ -202,11 +203,12 @@ router.get('/private', verifyToken, async (req, res) => {
 
   try {
     const bookmarks = await Bookmark.find({ userId });
-    // if (!bookmarks) return res.status(404).json({ error: 'Not Found' });
+    if (bookmarks.length === 0)
+      return res.status(404).json({ error: 'Not Found' });
 
     return res.status(200).json(bookmarks);
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -307,16 +309,6 @@ router.get('/private/bookmarkedPlace/:id', getBookmark, async (req, res) => {
       filteredPlaceInformations
     );
 
-    // for (const placeInfo of updatedPlaceInformations) {
-    //   const placeExists = await Place.findById(placeInfo.placeId._id);
-    //   if (!placeExists) {
-    //     // Remove the placeId._id from the bookmarkedPlaceId array in bookmarks collection
-    //     await Bookmark.findByIdAndUpdate(bookmark._id, {
-    //       $pull: { bookmarkedPlaceId: placeInfo.placeId._id },
-    //     });
-    //   }
-    // }
-
     return res.status(200).json(updatedPlaceInformations);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -400,7 +392,8 @@ router.get(
         bookmarkedPlaceId: place._id,
       });
 
-      // if (!bookmarks) return res.status(404).json({ error: 'Not Found' });
+      if (bookmarks.length === 0)
+        return res.status(404).json({ error: 'Not Found' });
 
       // 조건을 만족하는 모든 bookmarks를 반환한다.
       return res.status(200).json(bookmarks);
@@ -818,25 +811,28 @@ router.delete('/private', verifyToken, verifyBookmarkIds, async (req, res) => {
 
 /**
  * @swagger
- * /api/bookmarks/private/bookmarkedPlace/{bookmarkId}:
+ * /api/bookmarks/private/bookmarkedPlace/places/{placeId}:
  *   delete:
  *    tags:
  *      - Bookmarks Collection 기반 API
- *    summary: 즐겨찾기 리스트 내 특정 장소 제거
+ *    summary: 여러 즐겨찾기 리스트 내 특정 장소 일괄 제거
  *    security:
  *      - JWT: []
- *    description: 즐겨찾기 리스트 내에 사용자가 선택한 장소를 즐겨찾기에서 제거합니다.
+ *    description: 선택된 다수의 즐겨찾기 리스트 내에서 사용자가 선택한 장소를 즐겨찾기에서 일괄적으로 제거합니다.
  *    parameters:
  *      - in: path
- *        name: bookmarkId
- *        required: true
- *        description: bookmarkId
- *        type: string
- *      - in: query
  *        name: placeId
  *        required: true
  *        description: placeId
  *        type: string
+ *      - in: body
+ *        name: bookmarkIds
+ *        description: List of bookmark IDs to add
+ *        required: true
+ *        schema:
+ *          type: array
+ *          items:
+ *            type: string
  *    responses:
  *      200:
  *        description: OK
@@ -896,24 +892,24 @@ router.delete('/private', verifyToken, verifyBookmarkIds, async (req, res) => {
  *              example: "Internal Server Error"
  */
 router.delete(
-  '/private/bookmarkedPlace/:id',
+  '/private/bookmarkedPlace/places/:id',
   verifyToken,
-  getBookmark,
+  verifyBookmarkIds,
   getPlace,
   async (req, res) => {
-    const bookmark = res.bookmark;
+    const bookmarkIds = res.bookmarkIds;
     const place = res.place;
 
     try {
-      if (!bookmark.bookmarkedPlaceId.includes(place._id))
-        return res.status(404).json({ err: 'Not Found' });
+      // bookmarkIds에 해당하는 모든 북마크를 업데이트하고, bookmarkedPlaceId 배열에서 placeId 제거
+      const result = await Bookmark.updateMany(
+        { _id: { $in: bookmarkIds } }, // bookmarkIds 안의 ID들과 일치하는 북마크 찾기
+        { $pull: { bookmarkedPlaceId: place._id } } // bookmarkedPlaceId 배열에서 placeId 제거
+      );
 
-      await Bookmark.findByIdAndUpdate(bookmark._id, {
-        $pull: { bookmarkedPlaceId: place._id },
-      });
       return res.status(200).json({ message: 'OK' });
-    } catch (err) {
-      return res.status(500).json({ error: err.message });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
     }
   }
 );
