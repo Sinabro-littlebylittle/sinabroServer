@@ -214,7 +214,7 @@ router.get('/private', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /api/bookmarks/private/bookmarkedPlace/{bookmarkId}:
+ * /api/bookmarks/private/bookmarkedPlace/bookmarks/{bookmarkId}:
  *   get:
  *     tags:
  *       - Bookmarks Collection 기반 API
@@ -275,45 +275,50 @@ router.get('/private', verifyToken, async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.get('/private/bookmarkedPlace/:id', getBookmark, async (req, res) => {
-  try {
-    const bookmark = res.bookmark;
+router.get(
+  '/private/bookmarkedPlace/bookmarks/:id',
+  getBookmark,
+  async (req, res) => {
+    try {
+      const bookmark = res.bookmark;
 
-    // Check each ObjectId in bookmarkedPlaceId
-    for (const placeId of bookmark.bookmarkedPlaceId) {
-      const placeExists = await Place.findById(placeId);
-      if (!placeExists) {
-        // If the place doesn't exist in the places collection, remove its ObjectId from the bookmarkedPlaceId array
-        await Bookmark.findByIdAndUpdate(bookmark._id, {
-          $pull: { bookmarkedPlaceId: placeId },
-        });
+      // Check each ObjectId in bookmarkedPlaceId
+      for (const placeId of bookmark.bookmarkedPlaceId) {
+        const placeExists = await Place.findById(placeId);
+        if (!placeExists) {
+          // If the place doesn't exist in the places collection, remove its ObjectId from the bookmarkedPlaceId array
+          await Bookmark.findByIdAndUpdate(bookmark._id, {
+            $pull: { bookmarkedPlaceId: placeId },
+          });
+        }
       }
+
+      // Reload the updated bookmark
+      const updatedBookmark = await Bookmark.findById(bookmark._id);
+
+      const placeInformations = await Headcount.find()
+        .populate({
+          path: 'placeId',
+          populate: { path: 'markerId' },
+        })
+        .exec();
+      if (placeInformations.length === 0)
+        return res.status(404).json({ error: 'Not Found' });
+
+      const filteredPlaceInformations = placeInformations.filter((placeInfo) =>
+        bookmark.bookmarkedPlaceId.includes(placeInfo.placeId._id.toString())
+      );
+
+      const updatedPlaceInformations = addUpdateElapsedTimeProp(
+        filteredPlaceInformations
+      );
+
+      return res.status(200).json(updatedPlaceInformations);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-
-    // Reload the updated bookmark
-    const updatedBookmark = await Bookmark.findById(bookmark._id);
-
-    const placeInformations = await Headcount.find()
-      .populate({
-        path: 'placeId',
-        populate: { path: 'markerId' },
-      })
-      .exec();
-    if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
-
-    const filteredPlaceInformations = placeInformations.filter((placeInfo) =>
-      bookmark.bookmarkedPlaceId.includes(placeInfo.placeId._id.toString())
-    );
-
-    const updatedPlaceInformations = addUpdateElapsedTimeProp(
-      filteredPlaceInformations
-    );
-
-    return res.status(200).json(updatedPlaceInformations);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
   }
-});
+);
 
 /**
  * @swagger
@@ -595,6 +600,9 @@ router.post(
         _id: { $in: bookmarkIds },
       });
 
+      if (result.length === 0)
+        return res.status(404).json({ error: 'Not Found' });
+
       // 위에서 찾은 bookmarks들 중에서 bookmarkedPlaceId에 placeId가 이미 존재하는 경우 체크
       const alreadyBookmarked = result.some((bookmark) =>
         bookmark.bookmarkedPlaceId.includes(place._id)
@@ -622,7 +630,7 @@ router.post(
 
 /**
  * @swagger
- * /api/bookmarks/private/{bookmarkId}:
+ * /api/bookmarks/private/bookmarks/{bookmarkId}:
  *   patch:
  *    tags:
  *      - Bookmarks Collection 기반 API
@@ -696,25 +704,30 @@ router.post(
  *              type: string
  *              example: "Internal Server Error"
  */
-router.patch('/private/:id', verifyToken, getBookmark, async (req, res) => {
-  const { bookmarkName, iconColor } = req.body;
+router.patch(
+  '/private/bookmarks/:id',
+  verifyToken,
+  getBookmark,
+  async (req, res) => {
+    const { bookmarkName, iconColor } = req.body;
 
-  if (!bookmarkName || !iconColor || typeof req.body.iconColor !== 'number')
-    return res.status(400).json({ error: 'Bad Request' });
+    if (!bookmarkName || !iconColor || typeof req.body.iconColor !== 'number')
+      return res.status(400).json({ error: 'Bad Request' });
 
-  const bookmark = res.bookmark;
+    const bookmark = res.bookmark;
 
-  try {
-    const result = await Bookmark.updateMany(
-      { _id: bookmark._id }, // Filter
-      { $set: { bookmarkName, iconColor } } // Update action
-    );
+    try {
+      const result = await Bookmark.updateMany(
+        { _id: bookmark._id }, // Filter
+        { $set: { bookmarkName, iconColor } } // Update action
+      );
 
-    return res.status(200).json({ message: 'OK' });
-  } catch (err) {
-    return res.status(200).json({ err: err.message });
+      return res.status(200).json({ message: 'OK' });
+    } catch (err) {
+      return res.status(200).json({ err: err.message });
+    }
   }
-});
+);
 
 /**
  * @swagger
