@@ -173,7 +173,7 @@ router.post('/private', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /api/places/private/{placeId}:
+ * /api/places/private/places/{placeId}:
  *   put:
  *     tags:
  *       - Places Collection 기반 API
@@ -239,7 +239,7 @@ router.post('/private', verifyToken, async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.put('/private/:id', verifyToken, getPlace, async (req, res) => {
+router.put('/private/places/:id', verifyToken, getPlace, async (req, res) => {
   const { placeName, detailAddress } = req.body;
   if (!placeName || !detailAddress)
     return res.status(400).json({ error: 'Bad Request' });
@@ -257,7 +257,7 @@ router.put('/private/:id', verifyToken, getPlace, async (req, res) => {
 
 /**
  * @swagger
- * /api/places/private/{placeId}:
+ * /api/places/private/places/{placeId}:
  *   delete:
  *     tags:
  *       - Places Collection 기반 API
@@ -313,24 +313,29 @@ router.put('/private/:id', verifyToken, getPlace, async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.delete('/private/:id', verifyToken, getPlace, async (req, res) => {
-  try {
-    const places = await Place.find({
-      markerId: res.place.markerId,
-    });
-    // 삭제하려는 장소 위치(위도, 경도)에 등록된 장소가 한 곳 일 때 마커 데이터도 함께 제거
-    if (places.length === 1) {
-      // markers collection 내 삭제하려는 장소의 _id값을 지닌 연관 document 제거
-      await Marker.deleteOne({ _id: res.place.markerId });
-    }
+router.delete(
+  '/private/places/:id',
+  verifyToken,
+  getPlace,
+  async (req, res) => {
+    try {
+      const places = await Place.find({
+        markerId: res.place.markerId,
+      });
+      // 삭제하려는 장소 위치(위도, 경도)에 등록된 장소가 한 곳 일 때 마커 데이터도 함께 제거
+      if (places.length === 1) {
+        // markers collection 내 삭제하려는 장소의 _id값을 지닌 연관 document 제거
+        await Marker.deleteOne({ _id: res.place.markerId });
+      }
 
-    // (headcounts) collection 내 삭제하려는 장소의 _id값을 지닌 연관 document(들) 일괄 제거
-    await Headcount.deleteMany({ placeId: res.place._id });
-    await res.place.deleteOne();
-    return res.status(200).json({ remainingPlacesCnt: places.length - 1 });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+      // (headcounts) collection 내 삭제하려는 장소의 _id값을 지닌 연관 document(들) 일괄 제거
+      await Headcount.deleteMany({ placeId: res.place._id });
+      await res.place.deleteOne();
+      return res.status(200).json({ remainingPlacesCnt: places.length - 1 });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
   }
-});
+);
 
 module.exports = router;

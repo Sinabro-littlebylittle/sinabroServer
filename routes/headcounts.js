@@ -222,7 +222,7 @@ router.get('/public/placeInformations', async (req, res) => {
         populate: { path: 'markerId' },
       })
       .exec();
-    if (!placeInformations) {
+    if (placeInformations.length === 0) {
       return res.status(404).json({ error: 'Not Found' });
     }
 
@@ -238,7 +238,7 @@ router.get('/public/placeInformations', async (req, res) => {
 
 /**
  * @swagger
- * /api/headcounts/public/{markerId}/placeInformations:
+ * /api/headcounts/public/placeInformations/markers/{markerId}:
  *   get:
  *     tags:
  *       - Headcounts Collection 기반 API
@@ -326,32 +326,38 @@ router.get('/public/placeInformations', async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.get('/public/:id/placeInformations', getMarker, async (req, res) => {
-  try {
-    const markerId = req.params.id;
-    const placeInformations = await Headcount.find()
-      .populate({
-        path: 'placeId',
-        populate: { path: 'markerId' },
-      })
-      .exec();
-    if (!placeInformations) return res.status(404).json({ error: 'Not Found' });
+router.get(
+  '/public/placeInformations/markers/:id',
+  getMarker,
+  async (req, res) => {
+    try {
+      const markerId = req.params.id;
+      const placeInformations = await Headcount.find()
+        .populate({
+          path: 'placeId',
+          populate: { path: 'markerId' },
+        })
+        .exec();
 
-    const filteredPlaceInformations = placeInformations.filter(
-      (placeInfo) => placeInfo.placeId.markerId._id.toString() === markerId
-    );
-    const updatedPlaceInformations = addUpdateElapsedTimeProp(
-      filteredPlaceInformations
-    );
-    return res.status(200).json(updatedPlaceInformations);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
+      if (placeInformations.length === 0)
+        return res.status(404).json({ error: 'Not Found' });
+
+      const filteredPlaceInformations = placeInformations.filter(
+        (placeInfo) => placeInfo.placeId.markerId._id.toString() === markerId
+      );
+      const updatedPlaceInformations = addUpdateElapsedTimeProp(
+        filteredPlaceInformations
+      );
+      return res.status(200).json(updatedPlaceInformations);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
   }
-});
+);
 
 /**
  * @swagger
- * /api/headcounts/private/{placeId}:
+ * /api/headcounts/private/places/{placeId}:
  *   post:
  *     tags:
  *       - Headcounts Collection 기반 API
@@ -427,7 +433,7 @@ router.get('/public/:id/placeInformations', getMarker, async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.post('/private/:id', verifyToken, getPlace, async (req, res) => {
+router.post('/private/places/:id', verifyToken, getPlace, async (req, res) => {
   if (
     (!req.body.headcount && req.body.headcount < 0) ||
     typeof req.body.headcount !== 'number'
