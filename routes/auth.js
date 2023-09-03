@@ -186,24 +186,20 @@ router.post('/public/login', async (req, res) => {
  *         schema:
  *           type: object
  *           properties:
- *             email:
- *               type: string
- *               example: "abc@naver.com"
- *             password:
- *               type: string
- *               example: "xwtd2ev7b1HQnUEytxcMnSB1CnhS8AaA9lZY8DEOgQBW5nY8NMmgCw6UAHb1RJXBafwjAszrMSA5JxxDRpUH3A=="
- *             username:
- *               type: string
- *               example: "jenny"
- *             role:
- *               type: string
- *               example: "member"
  *             _id:
  *               type: string
- *               example: "64c1cc9d3a8b77048c1696aa"
+ *             email:
+ *               type: string
+ *             password:
+ *               type: string
+ *             username:
+ *               type: string
+ *             role:
+ *               type: string
+ *             point:
+ *               type: number
  *             __v:
  *               type: number
- *               example: 0
  *       400:
  *         description: Bad request
  *         schema:
@@ -244,6 +240,7 @@ router.post('/public/signup', async (req, res) => {
       password: createHashedPassword(password),
       username,
       role: 'member',
+      point: 0,
     });
 
     const newUser = await new UserInfo(user).save();

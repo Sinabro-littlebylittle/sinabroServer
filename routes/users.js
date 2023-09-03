@@ -5,6 +5,43 @@ const crypto = require('crypto');
 const { verifyToken } = require('./middlewares/authorization');
 const router = express.Router();
 
+/** ⚙️ [user_infos] collection에 대한 Model definition
+ * @swagger
+ * definitions:
+ *   UserInfo:
+ *     type: object
+ *     required:
+ *       - id
+ *       - email
+ *       - password
+ *       - username
+ *       - role
+ *       - point
+ *     properties:
+ *       _id:
+ *         type: string
+ *         format: 'ObjectId'
+ *         description: userId
+ *       email:
+ *         type: string
+ *         description: 이메일
+ *       password:
+ *         type: string
+ *         description: 비밀번호
+ *       username:
+ *         type: string
+ *         description: 유저명
+ *       role:
+ *         type: string
+ *         description: 역할
+ *       point:
+ *         type: number
+ *         description: 포인트
+ *       __v:
+ *         type: number
+ *         description: version key
+ */
+
 const createHashedPassword = (password) => {
   return crypto.createHash('sha512').update(password).digest('base64');
 };
@@ -96,6 +133,78 @@ const getUserInfo = async (req, res, next) => {
 router.get('/private/info', verifyToken, getUserInfo, async (req, res) => {
   const userInfo = res.userInfo;
   return res.status(200).json(userInfo);
+});
+
+/**
+ * @swagger
+ * /api/user/private/point:
+ *   patch:
+ *    tags:
+ *      - 사용자 관련 API
+ *    summary: 회원 포인트 증가/감소
+ *    security:
+ *      - JWT: []
+ *    description: 회원의 기존 포인트를 증가 또는 감소시킵니다.
+ *    parameters:
+ *      - in: body
+ *        name: pointRequest
+ *        required: true
+ *        schema:
+ *          type: object
+ *          properties:
+ *            point:
+ *              type: number
+ *    responses:
+ *      200:
+ *        description: OK
+ *        schema:
+ *          type: object
+ *          properties:
+ *            message:
+ *              type: string
+ *              example: "OK"
+ *      400:
+ *        description: Bad request
+ *        schema:
+ *          type: object
+ *          properties:
+ *            errror:
+ *              type: string
+ *              example: "Bad Request"
+ *      401:
+ *        description: Unauthorized
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Unauthorized"
+ *      500:
+ *        description: Internal Server Error
+ *        schema:
+ *          type: object
+ *          properties:
+ *            error:
+ *              type: string
+ *              example: "Internal Server Error"
+ */
+router.patch('/private/point', verifyToken, async (req, res) => {
+  const { point } = req.body;
+  const userId = res.locals.sub;
+
+  if (!point || typeof req.body.point !== 'number')
+    return res.status(400).json({ error: 'Bad Request' });
+
+  try {
+    const result = await UserInfo.updateMany(
+      { _id: userId }, // Filter
+      { $inc: { point } } // Increment/Decrease the point value by the given amount
+    );
+
+    return res.status(200).json({ message: 'OK' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 /**
