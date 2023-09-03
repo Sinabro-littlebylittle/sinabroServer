@@ -499,7 +499,7 @@ router.post('/private', verifyToken, async (req, res) => {
     const newBookmark = await bookmark.save();
     return res.status(201).json(newBookmark);
   } catch (err) {
-    return res.status(500).json({ err: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -724,7 +724,7 @@ router.patch(
 
       return res.status(200).json({ message: 'OK' });
     } catch (err) {
-      return res.status(200).json({ err: err.message });
+      return res.status(500).json({ error: err.message });
     }
   }
 );
