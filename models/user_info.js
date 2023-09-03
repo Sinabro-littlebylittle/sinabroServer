@@ -5,6 +5,7 @@ const userInfoSchema = new mongoose.Schema({
   password: String,
   username: String,
   role: String,
+  point: Number,
 });
 
 const UserInfo = mongoose.model('user_infos', userInfoSchema);
