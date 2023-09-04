@@ -89,6 +89,8 @@ const getUserInfo = async (req, res, next) => {
  *              type: string
  *            role:
  *              type: string
+ *            point:
+ *              type: number
  *      400:
  *        description: Bad Request
  *        schema:
