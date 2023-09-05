@@ -2,7 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const UserInfo = require('../models/user_info');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const { verifyToken } = require('./middlewares/authorization');
+const { env } = require('process');
 const router = express.Router();
 
 /** ⚙️ [user_infos] collection에 대한 Model definition
@@ -135,6 +137,266 @@ const getUserInfo = async (req, res, next) => {
 router.get('/private/info', verifyToken, getUserInfo, async (req, res) => {
   const userInfo = res.userInfo;
   return res.status(200).json(userInfo);
+});
+
+/**
+ * @swagger
+ * /api/user/generate-temp-password:
+ *   post:
+ *     tags:
+ *       - 사용자 관련 API
+ *     summary: 임시 비밀번호 생성
+ *     security:
+ *       - JWT: []
+ *     description: 회원의 기존 비밀번호 대신 임시 비밀번호로 변경되며, 요청된 이메일 주소로 임시 비밀번호를 발송합니다.
+ *     parameters:
+ *       - in: body
+ *         name: userRequest
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             email:
+ *               type: string
+ *     responses:
+ *       201:
+ *         description: Created
+ *         schema:
+ *           type: object
+ *           properties:
+ *             _id:
+ *               type: string
+ *             email:
+ *               type: string
+ *             username:
+ *               type: string
+ *             role:
+ *               type: string
+ *             point:
+ *               type: number
+ *       400:
+ *         description: Bad Request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Bad Request"
+ *       404:
+ *         description: Not Found
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Not Found"
+ *       500:
+ *         description: Internal Server Error
+ *         schema:
+ *           type: object
+ *           properties:
+ *             error:
+ *               type: string
+ *               example: "Internal Server Error"
+ */
+router.post('/generate-temp-password', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) return res.status(400).json({ error: 'Bad Request' });
+
+  try {
+    const user = await UserInfo.findOne({ email }).select('-password -__v');
+    if (!user) return res.status(404).send({ message: 'Not Found' });
+
+    // 임의의 비밀번호 생성
+    const randomPassword = crypto.randomBytes(4).toString('hex');
+
+    // 비밀번호 업데이트
+    user.password = createHashedPassword(randomPassword);
+
+    const newUser = await user.save();
+
+    // 이메일 전송 설정
+    const transporter = nodemailer.createTransport({
+      service: process.env.NODE_MAILER_SERVICE_NAME,
+      auth: {
+        user: process.env.NODE_MAILER_ADDRESS,
+        pass: process.env.NODE_MAILER_PWD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.NODE_MAILER_ADDRESS,
+      to: newUser.email,
+      subject: process.env.NODE_MAILER_SUBJECT,
+      html: `<div>
+      <table
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        style="width: 100%; max-width: 750px; min-width: 320px"
+      >
+        <tbody>
+          <tr>
+            <td>
+              <table
+                cellspacing="0"
+                cellpadding="0"
+                border="0"
+                style="width: 100%; max-width: 750px; min-width: 320px"
+              >
+                <tbody>
+                  <tr>
+                    <td>
+                      <div style="padding: 25px 20px 55px 10px">
+                        <a
+                          href="https://sinabro-developersung13.koyeb.app/"
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          style="text-decoration: none"
+                          ><img
+                            src="https://avatars.githubusercontent.com/u/114721330?s=200&v=4"
+                            alt="MUSINSA"
+                            height="50px; border:0;"
+                            loading="lazy"
+                          />
+                          <span
+                            style="
+                              font-weight: 500;
+                              font-size: 1.5rem;
+                              color: black;
+                              position: relative;
+                              bottom: 0.3rem;
+                              left: -0.5rem;
+                              letter-spacing: 0.025rem;
+                            "
+                          >
+                            sinabro
+                          </span>
+                        </a>
+                      </div>
+                      <div
+                        style="
+                          width: 100%;
+                          padding: 0 20px;
+                          margin: 0 auto;
+                          font-family: Malgun Gothic;
+                          box-sizing: border-box;
+                        "
+                      >
+                        <div
+                          style="
+                            font-size: 28px;
+                            font-weight: bold;
+                            color: #000;
+                            padding-bottom: 15px;
+                            border-bottom: 4px solid #000;
+                            height: 30px;
+                            line-height: 28px;
+                          "
+                        >
+                          임시 비밀번호 발급
+                        </div>
+                        <div
+                          style="
+                            font-size: 14px;
+                            color: #666;
+                            line-height: 22px;
+                            margin: 20px 0 0 0;
+                          "
+                        >
+                          로그인 후에 비밀번호를 반드시 변경해 주십시오.
+                        </div>
+                        <div
+                          style="
+                            font-size: 18px;
+                            font-weight: bold;
+                            background: #eee;
+                            padding: 11px 12px 11px 20px;
+                            margin-top: 40px;
+                          "
+                        >
+                          <span
+                            style="
+                              display: inline-block;
+                              height: 30px;
+                              line-height: 30px;
+                            "
+                            >회원정보</span
+                          >
+                        </div>
+                        <table
+                          cellspacing="0"
+                          cellpadding="0"
+                          border="0"
+                          style="
+                            width: 100%;
+                            border: 1px solid #eee;
+                            border-bottom: 0;
+                          "
+                        >
+                          <tbody>
+                            <tr>
+                              <th
+                                colspan="1"
+                                rowspan="1"
+                                style="
+                                  width: 80px;
+                                  font-size: 14px;
+                                  font-weight: bold;
+                                  border-bottom: 1px solid #eee;
+                                  padding: 16px 20px 15px 20px;
+                                  text-align: left;
+                                "
+                              >
+                                비밀번호
+                              </th>
+                              <td
+                                style="
+                                  font-size: 14px;
+                                  color: #999;
+                                  line-height: 22px;
+                                  border-bottom: 1px solid #eee;
+                                  padding: 16px 0 15px 0;
+                                "
+                              >
+                                ${randomPassword}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <div
+                          style="
+                            font-size: 14px;
+                            color: #999;
+                            margin: 35px 0 60px;
+                            line-height: 22px;
+                          "
+                        >
+                          COPYRIGHTS (C)SINABRO ALL RIGHTS RESERVED.
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`,
+    };
+
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      } else {
+        return res.status(201).json({ message: newUser });
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 /**
