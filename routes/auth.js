@@ -156,7 +156,7 @@ router.post('/public/login', async (req, res) => {
 
 /**
  * @swagger
- * /api/auth/public/signup:
+ * /api/auth/public/sign-up:
  *   post:
  *     tags:
  *       - 회원 인증 API
@@ -217,7 +217,7 @@ router.post('/public/login', async (req, res) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.post('/public/signup', async (req, res) => {
+router.post('/public/sign-up', async (req, res) => {
   const { email, password, username } = req.body;
 
   if (!email || !password || !username) {
