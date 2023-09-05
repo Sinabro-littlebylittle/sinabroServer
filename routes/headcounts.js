@@ -149,7 +149,7 @@ const filterAndSortByCreatedTime = (currPlaceInformations) => {
 
 /**
  * @swagger
- * /api/headcounts/public/placeInformations:
+ * /api/headcounts/public/place-informations:
  *   get:
  *     tags:
  *       - Headcounts Collection 기반 API
@@ -214,7 +214,7 @@ const filterAndSortByCreatedTime = (currPlaceInformations) => {
  *               type: string
  *               example: "Internal Server Error"
  */
-router.get('/public/placeInformations', async (req, res) => {
+router.get('/public/place-informations', async (req, res) => {
   try {
     const placeInformations = await Headcount.find()
       .populate({
@@ -238,7 +238,7 @@ router.get('/public/placeInformations', async (req, res) => {
 
 /**
  * @swagger
- * /api/headcounts/public/placeInformations/markers/{markerId}:
+ * /api/headcounts/public/place-informations/markers/{markerId}:
  *   get:
  *     tags:
  *       - Headcounts Collection 기반 API
@@ -327,7 +327,7 @@ router.get('/public/placeInformations', async (req, res) => {
  *               example: "Internal Server Error"
  */
 router.get(
-  '/public/placeInformations/markers/:id',
+  '/public/place-informations/markers/:id',
   getMarker,
   async (req, res) => {
     try {
