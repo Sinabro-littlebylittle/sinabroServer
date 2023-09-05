@@ -214,7 +214,7 @@ router.get('/private', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /api/bookmarks/private/bookmarkedPlace/bookmarks/{bookmarkId}:
+ * /api/bookmarks/private/bookmarked-place/bookmarks/{bookmarkId}:
  *   get:
  *     tags:
  *       - Bookmarks Collection 기반 API
@@ -276,7 +276,7 @@ router.get('/private', verifyToken, async (req, res) => {
  *               example: "Internal Server Error"
  */
 router.get(
-  '/private/bookmarkedPlace/bookmarks/:id',
+  '/private/bookmarked-place/bookmarks/:id',
   getBookmark,
   async (req, res) => {
     try {
@@ -322,7 +322,7 @@ router.get(
 
 /**
  * @swagger
- * /api/bookmarks/private/bookmarkedPlace/places/{placeId}:
+ * /api/bookmarks/private/bookmarked-place/places/{placeId}:
  *   get:
  *     tags:
  *       - Bookmarks Collection 기반 API
@@ -384,7 +384,7 @@ router.get(
  *               example: "Internal Server Error"
  */
 router.get(
-  '/private/bookmarkedPlace/places/:id',
+  '/private/bookmarked-place/places/:id',
   verifyToken,
   getPlace,
   async (req, res) => {
@@ -505,7 +505,7 @@ router.post('/private', verifyToken, async (req, res) => {
 
 /**
  * @swagger
- * /api/bookmarks/private/bookmarkedPlace/places/{placeId}:
+ * /api/bookmarks/private/bookmarked-place/places/{placeId}:
  *   post:
  *    tags:
  *      - Bookmarks Collection 기반 API
@@ -586,7 +586,7 @@ router.post('/private', verifyToken, async (req, res) => {
  *              example: "Internal Server Error"
  */
 router.post(
-  '/private/bookmarkedPlace/places/:id',
+  '/private/bookmarked-place/places/:id',
   verifyToken,
   verifyBookmarkIds,
   getPlace,
@@ -824,7 +824,7 @@ router.delete('/private', verifyToken, verifyBookmarkIds, async (req, res) => {
 
 /**
  * @swagger
- * /api/bookmarks/private/bookmarkedPlace/places/{placeId}:
+ * /api/bookmarks/private/bookmarked-place/places/{placeId}:
  *   delete:
  *    tags:
  *      - Bookmarks Collection 기반 API
@@ -905,7 +905,7 @@ router.delete('/private', verifyToken, verifyBookmarkIds, async (req, res) => {
  *              example: "Internal Server Error"
  */
 router.delete(
-  '/private/bookmarkedPlace/places/:id',
+  '/private/bookmarked-place/places/:id',
   verifyToken,
   verifyBookmarkIds,
   getPlace,
