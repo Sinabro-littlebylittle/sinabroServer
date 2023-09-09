@@ -5,6 +5,7 @@ const searchHistorySchema = new mongoose.Schema({
   searchKeyword: String,
   latitude: String,
   longitude: String,
+  createdTime: String,
   userId: { type: Schema.Types.ObjectId, ref: 'user_infos' },
 });
 
