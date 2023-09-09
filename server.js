@@ -95,6 +95,10 @@ app.use('/api/markers', markerRouter);
 const bookmarkRouter = require('./routes/bookmarks');
 app.use('/api/bookmarks', bookmarkRouter);
 
+// [search_history] collection에 대한 router 등록
+const searchHistoryRouter = require('./routes/searchHistories');
+app.use('/api/search-histories', searchHistoryRouter);
+
 app.listen(port, () => {
   console.log('Server started on port 5050');
 });

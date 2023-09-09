@@ -19,6 +19,7 @@ const router = express.Router();
  *       - username
  *       - role
  *       - point
+ *       - __v
  *     properties:
  *       _id:
  *         type: string

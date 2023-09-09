@@ -11,6 +11,7 @@ const router = express.Router();
  *       - _id
  *       - latitude
  *       - longitude
+ *       - __v
  *     properties:
  *       _id:
  *         type: string

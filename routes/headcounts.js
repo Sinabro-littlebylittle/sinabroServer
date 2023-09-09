@@ -18,6 +18,7 @@ const router = express.Router();
  *       - headcount
  *       - createdTime
  *       - userId
+ *       - __v
  *     properties:
  *       _id:
  *         type: string
