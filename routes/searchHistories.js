@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const SearchHistory = require('../models/searchHistory');
 const { verifyToken } = require('./middlewares/authorization');
+const { getFormattedDate } = require('../utils/dateUtils');
 const router = express.Router();
 
 /** ⚙️ [searchHistory] collection에 대한 Model definition
@@ -14,6 +15,7 @@ const router = express.Router();
  *       - searchKeyword
  *       - latitude
  *       - longitude
+ *       - createdTime
  *       - userId
  *       - __v
  *     properties:
@@ -30,6 +32,10 @@ const router = express.Router();
  *       longitude:
  *         type: string
  *         description: 검색하여 선택한 장소의 경도
+ *       createdTime:
+ *         type: string
+ *         example: "2023-07-29 20:44:51.681"
+ *         description: 검색 기록 데이터가 추가된 일자 및 시각
  *       userId:
  *         type: string
  *         format: ObjectId
@@ -102,6 +108,26 @@ router.get('/private', verifyToken, async (req, res) => {
   const userId = res.locals.sub;
 
   try {
+    const currentYear = new Date().getFullYear();
+    const startOfCurrentYear = `${currentYear}-01-01 00:00:00.000`;
+
+    // 작년 데이터 찾기
+    const lastYearHistories = await SearchHistory.find({
+      userId,
+      createdTime: {
+        $lt: startOfCurrentYear,
+      },
+    });
+
+    console.log('작년 데이터:', lastYearHistories);
+
+    // 작년 데이터 삭제
+    if (lastYearHistories.length > 0) {
+      const idsToDelete = lastYearHistories.map((history) => history._id);
+      await SearchHistory.deleteMany({ _id: { $in: idsToDelete } });
+    }
+
+    // 남아 있는 데이터 조회
     const searchHistories = await SearchHistory.find({ userId });
     if (searchHistories.length === 0)
       return res.status(404).json({ error: 'Not Found' });
@@ -186,6 +212,7 @@ router.post('/private', verifyToken, async (req, res) => {
     const searchHistory = new SearchHistory(req.body);
 
     searchHistory.userId = userId;
+    searchHistory.createdTime = getFormattedDate();
 
     const newSearchHistory = await searchHistory.save();
     return res.status(201).json(newSearchHistory);
