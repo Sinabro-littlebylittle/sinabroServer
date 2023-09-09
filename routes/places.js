@@ -18,6 +18,7 @@ const router = express.Router();
  *       - address
  *       - detailAddress
  *       - markerId
+ *       - __v
  *     properties:
  *       _id:
  *         type: string
@@ -294,7 +295,7 @@ router.put('/private/places/:id', verifyToken, getPlace, async (req, res) => {
  *           type: object
  *           properties:
  *             error:
- *               type: number
+ *               type: string
  *               example: "Unauthorized"
  *       415:
  *         description: Unsupported Media Type
