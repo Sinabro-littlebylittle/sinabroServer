@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Bookmark = require('../models/bookmark');
-const UserInfo = require('../models/user_info');
 const Place = require('../models/place');
 const Headcount = require('../models/headcount');
 const { verifyToken } = require('./middlewares/authorization');
@@ -17,6 +16,7 @@ const router = express.Router();
  *       - userId
  *       - bookmarkName
  *       - iconColor
+ *       - __v
  *     properties:
  *       _id:
  *         type: string
@@ -157,14 +157,6 @@ const addUpdateElapsedTimeProp = (currPlaceInformations) => {
  *         schema:
  *           items:
  *             $ref: '#/definitions/Bookmark'
- *       400:
- *         description: Bad Request
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Bad Request"
  *       401:
  *         description: Unauthorized
  *         schema:
@@ -181,14 +173,6 @@ const addUpdateElapsedTimeProp = (currPlaceInformations) => {
  *             error:
  *               type: string
  *               example: "Not Found"
- *       415:
- *         description: Unsupported Media Type
- *         schema:
- *           type: object
- *           properties:
- *             error:
- *               type: string
- *               example: "Unsupported Media Type"
  *       500:
  *         description: Internal Server Error
  *         schema:
@@ -771,7 +755,7 @@ router.patch(
  *           type: object
  *           properties:
  *             error:
- *               type: number
+ *               type: string
  *               example: "Unauthorized"
  *       404:
  *         description: Not Found
