@@ -17,7 +17,6 @@ const router = express.Router();
  *       - placeId
  *       - headcount
  *       - createdTime
- *       - userId
  *       - __v
  *     properties:
  *       _id:
@@ -35,10 +34,6 @@ const router = express.Router();
  *         type: string
  *         example: "2023-07-29 20:44:51.681"
  *         description: 인원수 정보가 추가된 일자 및 시각
- *       userId:
- *         type: string
- *         format: ObjectId
- *         description: headcountId와 연관된 userId
  *       __v:
  *         type: number
  *         description: version key
@@ -397,8 +392,6 @@ router.get(
  *             createdTime:
  *               type: string
  *               example: "2023-07-29 20:44:51.681"
- *             userId:
- *               type: string
  *             __v:
  *               type: number
  *       400:
@@ -444,7 +437,6 @@ router.post('/private/places/:id', verifyToken, getPlace, async (req, res) => {
   const headcount = new Headcount(req.body);
   headcount.placeId = req.params.id;
   headcount.createdTime = getFormattedDate();
-  headcount.userId = res.locals.sub;
 
   try {
     const newHeadcount = await headcount.save();

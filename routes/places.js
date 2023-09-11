@@ -162,7 +162,6 @@ router.post('/private', verifyToken, async (req, res) => {
       placeId: newPlace._id,
       headcount: -1,
       createdTime: getFormattedDate(),
-      userId: res.locals.sub,
     });
 
     const newHeadcount = await headcount.save();
