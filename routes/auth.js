@@ -19,6 +19,28 @@ const createHashedPassword = (password) => {
   return crypto.createHash('sha512').update(password).digest('base64');
 };
 
+/** ⚙️ [userWithdrawalReasons] collection에 대한 Model definition
+ * @swagger
+ * definitions:
+ *   UserWithdrawalReason:
+ *     type: object
+ *     required:
+ *       - withdrawalReason
+ *       - feedback
+ *       - createdTime
+ *     properties:
+ *       withdrawalReason:
+ *         type: string
+ *         description: 회원탈퇴의 주된 사유
+ *       feedback:
+ *         type: string
+ *         description: 회원탈퇴 시 제출된 추가 의견 또는 피드백
+ *       createdTime:
+ *         type: string
+ *         example: "2023-09-11 20:44:51.681"
+ *         description: 회원탈퇴 사유 데이터가 추가된 일자 및 시각
+ */
+
 /**
  * @swagger
  * /api/auth/public/search:
@@ -261,8 +283,8 @@ router.post('/public/sign-up', async (req, res) => {
  *   delete:
  *     tags:
  *       - 회원 인증 API
- *     summary: 회원 탈퇴
- *     description: 인증된 사용자의 계정을 삭제합니다.
+ *     summary: 회원 탈퇴 및 사유 기록
+ *     description: 인증된 사용자의 계정을 삭제하며, 사유를 기록합니다.
  *     parameters:
  *       - in: body
  *         name: deleteAccountRequest
