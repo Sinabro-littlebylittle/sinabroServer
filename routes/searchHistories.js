@@ -119,16 +119,16 @@ router.get('/private', verifyToken, async (req, res) => {
       },
     });
 
-    console.log('작년 데이터:', lastYearHistories);
-
     // 작년 데이터 삭제
     if (lastYearHistories.length > 0) {
       const idsToDelete = lastYearHistories.map((history) => history._id);
       await SearchHistory.deleteMany({ _id: { $in: idsToDelete } });
     }
 
-    // 남아 있는 데이터 조회
-    const searchHistories = await SearchHistory.find({ userId });
+    // 남아 있는 데이터를 createdTime 필드 기준 최신 데이터부터 조회
+    const searchHistories = await SearchHistory.find({ userId }).sort({
+      createdTime: -1,
+    });
     if (searchHistories.length === 0)
       return res.status(404).json({ error: 'Not Found' });
 
