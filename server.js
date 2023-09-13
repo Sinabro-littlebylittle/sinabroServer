@@ -36,7 +36,6 @@ const httpLogger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
   transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
     new winston.transports.File({ filename: 'http.log' }),
     new winston.transports.Console({ format: winston.format.simple() }),
   ],
