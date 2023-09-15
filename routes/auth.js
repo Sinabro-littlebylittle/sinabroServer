@@ -225,6 +225,8 @@ router.post('/public/login', async (req, res) => {
  *               type: string
  *             point:
  *               type: number
+ *             createdTime:
+ *               type: string
  *             __v:
  *               type: number
  *       400:
@@ -268,6 +270,7 @@ router.post('/public/sign-up', async (req, res) => {
       username,
       role: 'member',
       point: 0,
+      createdTime: getFormattedDate(),
     });
 
     const newUser = await new UserInfo(user).save();
