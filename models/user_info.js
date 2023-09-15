@@ -6,6 +6,7 @@ const userInfoSchema = new mongoose.Schema({
   username: String,
   role: String,
   point: Number,
+  createdTime: String,
 });
 
 const UserInfo = mongoose.model('user_infos', userInfoSchema);
