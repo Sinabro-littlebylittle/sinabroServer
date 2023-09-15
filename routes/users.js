@@ -40,6 +40,10 @@ const router = express.Router();
  *       point:
  *         type: number
  *         description: 포인트
+ *       createdTime:
+ *         type: string
+ *         example: "2023-07-29 20:44:51.681"
+ *         description: 유저 데이터가 추가된 일자 및 시각
  *       __v:
  *         type: number
  *         description: version key
