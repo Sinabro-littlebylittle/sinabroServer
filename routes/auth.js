@@ -311,6 +311,14 @@ router.post('/public/sign-up', async (req, res) => {
  *             message:
  *               type: string
  *               example: "Account deleted successfully"
+ *       400:
+ *         description: Bad request
+ *         schema:
+ *           type: object
+ *           properties:
+ *             errror:
+ *               type: string
+ *               example: "Bad request"
  *       401:
  *         description: Unauthorized
  *         schema:
@@ -333,9 +341,8 @@ router.delete('/private/delete-account', verifyToken, async (req, res) => {
 
   const { withdrawalReason, feedback } = req.body;
 
-  if (!withdrawalReason || !feedback) {
+  if (!withdrawalReason || !feedback)
     return res.status(400).json({ error: 'Bad request' });
-  }
 
   try {
     await UserInfo.findByIdAndDelete(userId);
