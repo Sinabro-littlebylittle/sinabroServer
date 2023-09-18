@@ -167,18 +167,7 @@ router.get('/private/info', verifyToken, getUserInfo, async (req, res) => {
  *       201:
  *         description: Created
  *         schema:
- *           type: object
- *           properties:
- *             _id:
- *               type: string
- *             email:
- *               type: string
- *             username:
- *               type: string
- *             role:
- *               type: string
- *             point:
- *               type: number
+ *           $ref: '#/definitions/UserInfo'
  *       400:
  *         description: Bad Request
  *         schema:
@@ -261,7 +250,7 @@ router.post('/generate-temp-password', async (req, res) => {
                           style="text-decoration: none"
                           ><img
                             src="https://avatars.githubusercontent.com/u/114721330?s=200&v=4"
-                            alt="MUSINSA"
+                            alt="SINABRO"
                             height="50px; border:0;"
                             loading="lazy"
                           />
@@ -396,7 +385,7 @@ router.post('/generate-temp-password', async (req, res) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       } else {
-        return res.status(201).json({ message: newUser });
+        return res.status(201).json(newUser);
       }
     });
   } catch (error) {

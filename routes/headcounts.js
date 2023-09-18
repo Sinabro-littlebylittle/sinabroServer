@@ -381,19 +381,7 @@ router.get(
  *       201:
  *         description: Created
  *         schema:
- *           type: object
- *           properties:
- *             _id:
- *               type: string
- *             placeId:
- *               type: string
- *             headcount:
- *               type: number
- *             createdTime:
- *               type: string
- *               example: "2023-07-29 20:44:51.681"
- *             __v:
- *               type: number
+ *           $ref: '#/definitions/Headcount'
  *       400:
  *         description: Bad Request
  *         schema:

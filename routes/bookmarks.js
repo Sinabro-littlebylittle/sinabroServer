@@ -417,17 +417,7 @@ router.get(
  *       201:
  *         description: Created
  *         schema:
- *           properties:
- *             _id:
- *               type: string
- *             userId:
- *               type: string
- *             bookmarkName:
- *               type: string
- *             iconColor:
- *               type: string
- *             __v:
- *               type: number
+ *           $ref: '#/definitions/Bookmark'
  *       400:
  *         description: Bad Request
  *         schema:
