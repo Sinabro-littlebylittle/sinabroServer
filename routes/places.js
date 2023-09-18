@@ -92,20 +92,7 @@ const getPlace = async (req, res, next) => {
  *       201:
  *         description: Created
  *         schema:
- *           properties:
- *               properties:
- *                 _id:
- *                   type: string
- *                 placeName:
- *                   type: string
- *                 address:
- *                   type: string
- *                 detailAddress:
- *                   type: string
- *                 markerId:
- *                   type: string
- *                 __v:
- *                   type: number
+ *           $ref: '#/definitions/Place'
  *       400:
  *         description: Bad Request
  *         schema:
