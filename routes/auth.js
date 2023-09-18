@@ -211,24 +211,7 @@ router.post('/public/login', async (req, res) => {
  *       201:
  *         description: Created
  *         schema:
- *           type: object
- *           properties:
- *             _id:
- *               type: string
- *             email:
- *               type: string
- *             password:
- *               type: string
- *             username:
- *               type: string
- *             role:
- *               type: string
- *             point:
- *               type: number
- *             createdTime:
- *               type: string
- *             __v:
- *               type: number
+ *           $ref: '#/definitions/UserInfo'
  *       400:
  *         description: Bad request
  *         schema:
