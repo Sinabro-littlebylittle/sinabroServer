@@ -7,6 +7,32 @@ const { verifyToken } = require('./middlewares/authorization');
 const { env } = require('process');
 const router = express.Router();
 
+const multer = require('multer');
+const path = require("path");
+const upload = multer({
+    storage: multer.diskStorage({
+      	filename(req, file, done) {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            done(null, uniqueSuffix + path.extname(file.originalname));
+        },
+		destination(req, file, done) {
+      		console.log(file);
+              console.log(path.join(__dirname, '..',"uploads"));
+		    done(null, path.join(__dirname, '..',"public","uploads"));
+	    },
+    }),
+});
+
+router.post('/profile', upload.single('profile'), async(req,res) => {
+  const image = req.file ? req.file.path : undefined;
+  console.log(req.file);
+  if (image === undefined) {
+    return res.status(400).json({ error: "Image doesn't exist" });
+  }
+  const index = image.indexOf('\\uploads\\');
+  return res.status(200).send({ success: "/uploads/"+path.basename(image) });
+});
+
 /** ⚙️ [user_infos] collection에 대한 Model definition
  * @swagger
  * definitions:
