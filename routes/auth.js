@@ -19,6 +19,7 @@ const createHashedPassword = (password) => {
   return crypto.createHash('sha512').update(password).digest('base64');
 };
 
+
 /** ⚙️ [userWithdrawalReasons] collection에 대한 Model definition
  * @swagger
  * definitions:
@@ -230,7 +231,7 @@ router.post('/public/login', async (req, res) => {
  *               example: "Internal Server Error"
  */
 router.post('/public/sign-up', async (req, res) => {
-  const { email, password, username } = req.body;
+  const { email, password, profile, username } = req.body;
 
   if (!email || !password || !username) {
     return res.status(400).json({ error: 'Bad request' });
@@ -250,6 +251,7 @@ router.post('/public/sign-up', async (req, res) => {
     const user = new UserInfo({
       email,
       password: createHashedPassword(password),
+      profile,
       username,
       role: 'member',
       point: 0,
